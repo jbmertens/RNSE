@@ -22,8 +22,8 @@ void writeinfo(char *dir, char *root)
   fprintf(datafile, "# Writing simulation.\n");
   fprintf(datafile, "#Points Sampled:\n%d\n", POINTS_TO_SAMPLE);
   fprintf(datafile, "# Steps recorded:\n%d\n", STEPS_TO_RECORD);
-  fprintf(datafile, "# dx/dt (timestep):\n%f", dx/dt);
-  fprintf(datafile, "# Equation of state parameter w:\n%f", W_EOS);
+  fprintf(datafile, "# dx/dt (timestep):\n%f\n", dx/dt);
+  fprintf(datafile, "# Equation of state parameter w:\n%f\n", W_EOS);
   fprintf(datafile, "# Physical lattice dimensions:\n%f %f %f\n",
     SIZE, SIZE, SIZE);
   fprintf(datafile, "# Total number of steps run:\n%d\n", STEPS);
