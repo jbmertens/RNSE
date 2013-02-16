@@ -111,25 +111,13 @@ int main(int argc, char *argv[])
 
   /* print out sampling information */
   printf("Starting simulation.  Storing data in %s\n", data_dir);
-  printf("Will be writing ");
-  printf( "%i",  STEPS_TO_RECORD              );
-  printf( "%s",  " of "                   );
-  printf( "%i",  STEPS                    );
-  printf( "%s",  " steps (sample every "          );
-  printf( "%i",  T_SAMPLEINT                );
-  printf( "%s\n",  " steps)."                 );
-  printf( "%s",  "Writing "                 );
-  printf( "%i",  POINTS_TO_SAMPLE               );
-  printf( "%s",  " along x-axis (sample every "       );
-  printf( "%i",  X_SAMPLEINT                );
-  printf( "%s\n",  " points on all axes)"           );
-  printf( "%s",  "Setting w="                 );
-  printf( "%1.2f", W_EOS                    );
-  printf( "%s",  ", R_0="                   );
-  printf( "%1.2f", R0                     );
-  printf( "%s",  " (~"                    );
-  printf( "%1.2f", POINTS/2-R0/dx               );
-  printf( "%s",  " voxels from edge).\n\n"          );
+  printf("Will be writing %i of %i steps (sample every %i steps).\n",
+    STEPS_TO_RECORD, STEPS, T_SAMPLEINT);
+  printf("Writing %i along x-axis (sample every %i points on all axes).\n",
+    POINTS_TO_SAMPLE, X_SAMPLEINT);
+  printf("Setting w=%1.2f, R_0=%1.2f, (~%1.2f voxels from edge).\n\n",
+    W_EOS, R0, POINTS/2-R0/dx);
+
   /* also write this information to file */
   writeinfo(data_dir, data_name);
 
@@ -361,20 +349,19 @@ void writeinfo(char *dir, char *root)
   strcat(infofile, root);
   strcat(infofile, ".info");
   datafile = fopen(infofile, "w+");
-  if( NULL == datafile ){ printf( "%s%s\n", "\nError opening file!\n", infofile ); }
+  if( datafile == NULL )
+  {
+    printf("Error opening file: %s\n", infofile );
+  }
+  fprintf(datafile, "# Writing simulation.\n");
+  fprintf(datafile, "#Points Sampled:\n%d\n", POINTS_TO_SAMPLE);
+  fprintf(datafile, "# Steps recorded:\n%d\n", STEPS_TO_RECORD);
+  fprintf(datafile, "# dx/dt (timestep):\n%f", dx/dt);
+  fprintf(datafile, "# Equation of state parameter w:\n%f", W_EOS);
+  fprintf(datafile, "# Physical lattice dimensions:\n%f %f %f\n",
+    SIZE, SIZE, SIZE);
+  fprintf(datafile, "# Total number of steps run:\n%d\n", STEPS);
 
-  fprintf(  datafile,   "%s",     "# Writing simulation.\n# Points Sampled:\n"      );
-  fprintf(  datafile,   "%d",     POINTS_TO_SAMPLE                    );
-  fprintf(  datafile,   "%s",     "\n# Steps recorded:\n"                 );
-  fprintf(  datafile,   "%d",     STEPS_TO_RECORD                     );
-  fprintf(  datafile,   "%s",     "\n# dx/dt (timestep):\n"                 );
-  fprintf(  datafile,   "%f",     dx/dt                           );
-  fprintf(  datafile,   "%s",     "\n# Equation of state parameter w:\n"          );
-  fprintf(  datafile,   "%f",     W_EOS                           );
-  fprintf(  datafile,   "%s",     "\n# Physical lattice dimensions:\n"          );
-  fprintf(  datafile,   "%f %f %f", SIZE, SIZE, SIZE                    );
-  fprintf(  datafile,   "%s",     "\n# Total number of steps run:\n"            );
-  fprintf(  datafile,   "%d",     STEPS                           );
   fclose(datafile);
   free(infofile);
 }
