@@ -10,6 +10,7 @@
 #include <math.h>
 #include <sys/stat.h> /* mkdir() */
 #include <time.h>
+#include <omp.h>
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
