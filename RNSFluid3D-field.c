@@ -10,6 +10,7 @@ To-do's:
 #include <math.h>
 #include <zlib.h>
 #include <hdf5.h>
+#include <time.h>
 
 #include "defines.h"
 
@@ -122,6 +123,8 @@ int main(int argc, char *argv[])
   /* also write this information to file */
   writeinfo(data_dir, data_name);
 
+  /* record simulation time - wall clock time! */
+  time_t time_start = time(NULL);
 
   /* initialize data */
   for(i=0; i<POINTS; i++)
@@ -212,11 +215,14 @@ int main(int argc, char *argv[])
 
   }
 
+  time_t time_end = time(NULL);
+
   // dump all data from current simulation... perhaps can read back in later?  Maybe.
   dumpstate(fields, fwrites, POINTS, data_dir, data_name);
   // done.
   printf("Simulation complete.\n");
   printf("%i steps were written to disk.\n", fwrites);
+  printf("Simulation took %ld seconds.\n", (long)(time_end - time_start));
   
   return EXIT_SUCCESS;
 }
