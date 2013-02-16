@@ -16,6 +16,10 @@ else
 	CC_OPTIMIZE = -O3 -std=c99
 endif
 
+ifeq ($(fast), 1)
+	CC_OPTIMIZE += -ffast-math
+endif
+
 # Require all object files and then link
 all: $(OBJ)
 	$(CC) $(OBJ) -o $(EXEC) $(CC_OPTS) $(CC_OPTIMIZE)
