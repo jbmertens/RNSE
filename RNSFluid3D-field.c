@@ -149,6 +149,7 @@ int main(int argc, char *argv[])
           //   evolve(rks[0], fieldsnext, 1.0, &paq, i, j, k);
         }
       }
+    }
 
 
     // store new field data
@@ -339,7 +340,8 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
 /*
  * Evolution step of simulation - compute next step.
  */
-void evolve(simType *initial, simType *final, simType coeff, PointData *paq, int i, int j, int k)
+void evolve(simType *initial, simType *final, simType coeff, PointData *paq,
+  int i, int j, int k)
 {
   calculatequantities(initial, paq, i, j, k);
 
@@ -354,3 +356,6 @@ void evolve(simType *initial, simType *final, simType coeff, PointData *paq, int
   // field derivative
    final[INDEX(i,j,k,5)] = paq->fields[5] + coeff*dt*ddtfield_evfn(paq);
 }
+
+
+
