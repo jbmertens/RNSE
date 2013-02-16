@@ -1,7 +1,7 @@
 /*
 To-do's:
 - take in file name as argument
-- Some basic checks (T_SAMPLEINT > 0, X_SAMPLEINT > 0)
+- Some basic checks (T_SAMPLEINT > 0, X_SAMPLEINT > 0, etc)
 */
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +9,7 @@ To-do's:
 #include <math.h>
 #include <zlib.h>
 #include <hdf5.h>
+
 
 // potential parameters: must change the initial field configuration if these are changed!
 #define LAMBDA      0.01    // potential height
@@ -184,6 +185,24 @@ int main(int argc, char *argv[])
     /* Actual Evolution code */
     for (s=0; s<STEPS; s++)
     {
+
+        // write data if necessary
+        if(s % T_SAMPLEINT == 0)
+        {
+            // fieldsnext is no longer used, so we can re-use it to store an undersampled array of data:
+            for(i=0; i<POINTS_TO_SAMPLE; i++)
+                for(j=0; j<POINTS_TO_SAMPLE; j++)
+                    for(k=0; k<POINTS_TO_SAMPLE; k++)
+                        for(u=0; u<DOF; u++)
+                            fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
+                                = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
+
+            printf("\rWriting step %i of %i ...", s, STEPS);
+            dumpstate(fieldsnext, fwrites, POINTS_TO_SAMPLE);
+            fwrites++;
+        } // end write step
+
+
         // #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
         for(i=0; i<POINTS; i++)
             for(j=0; j<POINTS; j++)
@@ -205,22 +224,6 @@ int main(int argc, char *argv[])
                 for(k=0; k<POINTS; k++)
                     for(u=0; u<DOF; u++)
                         fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
-
-        // write data if necessary
-        if(s % T_SAMPLEINT == 0)
-        {
-            // fieldsnext is no longer used, so we can re-use it to store an undersampled array of data:
-            for(i=0; i<POINTS_TO_SAMPLE; i++)
-                for(j=0; j<POINTS_TO_SAMPLE; j++)
-                    for(k=0; k<POINTS_TO_SAMPLE; k++)
-                        for(u=0; u<DOF; u++)
-                            fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
-                                = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
-
-            printf("\rWriting step %i of %i ...", s, STEPS);
-            dumpstate(fieldsnext, fwrites, POINTS_TO_SAMPLE);
-            fwrites++;
-        } // end write step
 
     }
 
@@ -497,7 +500,7 @@ void Jsource(PointData *paq)
 simType energy_evfn(PointData *paq)
 {
     return (
-        - W_EOSp1 * paq->ut / (1.0 + W_EOSm1 * paq->u2) * (
+        - W_EOSp1 * paq->ut / (1.0 - W_EOSm1 * paq->u2) * (
             -W_EOSm1 / W_EOSp1 * sumvt(paq->fields, paq->gradients, 1, 0)
             + sp_tr(paq->gradients)
             - sumvtv(paq->fields, paq->gradients, paq->fields) / paq->ut2
