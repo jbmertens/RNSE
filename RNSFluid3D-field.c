@@ -57,6 +57,7 @@ typedef struct {
     simType ut;
     simType ut2;
     simType u2;
+    simType uudu;
     simType ji[4];
     simType Ji[4];
 } PointData;
@@ -503,7 +504,7 @@ simType energy_evfn(PointData *paq)
         - W_EOSp1 * paq->ut / (1.0 - W_EOSm1 * paq->u2) * (
             -W_EOSm1 / W_EOSp1 * sumvt(paq->fields, paq->gradients, 1, 0)
             + sp_tr(paq->gradients)
-            - sumvtv(paq->fields, paq->gradients, paq->fields) / paq->ut2
+            - paq->uudu / paq->ut2
         )
         - W_EOSp1 / paq->ut2 * sumvv(paq->fields, paq->Ji)
         - (paq->ut * paq->ji[0] + sumvv(paq->fields, paq->ji)) / exp(paq->fields[0]) / paq->ut
@@ -521,7 +522,7 @@ simType fluid_evfn(PointData *paq, int u)
                 sp_tr(paq->gradients)
                 - (
                     W_EOS * sumvt(paq->fields, paq->gradients, 1, 0) / W_EOSp1
-                    + sumvtv(paq->fields, paq->gradients, paq->fields)
+                    + paq->uudu
                 ) / paq->ut2
             )
         - (
@@ -573,6 +574,7 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
     paq->u2 = magu2(paq);
     paq->ut = Ut(paq);
     paq->ut2 = Ut2(paq);
+    paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
 
     // [GRADIENTS]
     for(u=0; u<DOF; u++) {
