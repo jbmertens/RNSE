@@ -6,6 +6,7 @@ To-do's:
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/stat.h> /* mkdir() */
 #include <math.h>
 #include <zlib.h>
 #include <hdf5.h>
@@ -187,23 +188,37 @@ int main(int argc, char *argv[])
           //   evolve(rks[0], fieldsnext, 1.0, &paq, i, j, k);
         }
 
+
     // store new field data
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
           for(u=0; u<DOF; u++)
-            fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
+          {
+#ifdef DEBUG
+            /* check for NaN */
+            if(isnan(fieldsnext[INDEX(i,j,k,u)]))
+            {
+              /* do something! */
+            }
+            else
+            {
+              fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
+            }
+#else
+              fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
+#endif
+          }
 
   }
 
   // dump all data from current simulation... perhaps can read back in later?  Maybe.
   dumpstate(fields, fwrites, POINTS, data_dir, data_name);
   // done.
-  printf("%s","\nSimulation complete.  ");
-  printf("%i", fwrites);
-  printf("%s\n", " steps were written to disk.");
+  printf("Simulation complete.\n");
+  printf("%i steps were written to disk.\n", fwrites);
   
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 
