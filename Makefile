@@ -29,4 +29,4 @@ all: $(OBJ)
 	$(CC) -c $< $(CC_OPTIMIZE)
 
 clean:
-	rm $(EXEC) *.o
+	rm $(EXEC) $(OBJ)
