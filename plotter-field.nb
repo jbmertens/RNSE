@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[     29464,        731]
-NotebookOptionsPosition[     28041,        677]
-NotebookOutlinePosition[     28426,        694]
-CellTagsIndexPosition[     28383,        691]
+NotebookDataLength[     30630,        757]
+NotebookOptionsPosition[     29207,        703]
+NotebookOutlinePosition[     29592,        720]
+CellTagsIndexPosition[     29549,        717]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -25,10 +25,6 @@ Cell["File Information", "Section",
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{
-   RowBox[{"datafile", " ", "=", " ", "\"\<data\>\""}], ";"}], 
-  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
- RowBox[{
   RowBox[{"slash", " ", "=", 
    RowBox[{"If", "[", 
     RowBox[{
@@ -36,42 +32,62 @@ Cell[BoxData[{
      "\"\<\\\\\>\"", ",", " ", "\"\</\>\""}], "]"}]}], 
   ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{
-   RowBox[{"path", " ", "=", " ", 
-    RowBox[{
-     RowBox[{"SetDirectory", "[", 
-      RowBox[{"NotebookDirectory", "[", "]"}], "]"}], "<>", "slash", "<>", 
-     "\"\<data\>\"", "<>", "slash"}]}], ";"}], 
-  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"filedata", "=", 
+  RowBox[{"path", " ", "=", " ", 
    RowBox[{
-    RowBox[{"Import", "[", 
-     RowBox[{
-      RowBox[{"path", " ", "<>", "datafile", "<>", "\"\<.info\>\""}], ",", 
-      "\"\<Table\>\""}], "]"}], "\[LeftDoubleBracket]", 
-    RowBox[{
-     RowBox[{"{", 
-      RowBox[{"3", ",", "5", ",", "7", ",", "9"}], "}"}], ",", "1"}], 
-    "\[RightDoubleBracket]"}]}], ";"}], "\[IndentingNewLine]", 
+    RowBox[{"SetDirectory", "[", 
+     RowBox[{"NotebookDirectory", "[", "]"}], "]"}], "<>", "slash", "<>", 
+    "\"\<data\>\"", "<>", "slash"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"dims", " ", "=", " ", 
-   RowBox[{"ConstantArray", "[", 
-    RowBox[{
-     RowBox[{
-     "filedata", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], ",", 
-     "3"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"nsteps", " ", "=", 
-   RowBox[{
-   "filedata", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}], 
+  RowBox[{"infofile", " ", "=", " ", 
+   RowBox[{"FileNames", "[", 
+    RowBox[{"path", "<>", "\"\<*.info\>\""}], "]"}]}], 
   ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"mid", " ", "=", " ", 
-   RowBox[{"Round", "[", 
+ RowBox[{"If", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"Length", "[", "infofile", "]"}], " ", "\[NotEqual]", " ", "1"}], 
+   ",", " ", 
+   RowBox[{"Print", "[", 
     RowBox[{
-     RowBox[{"dims", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], 
-     "/", "2"}], "]"}]}], ";"}]}], "Input"]
+    "\"\<Unable to find unique .info file in '\>\"", "<>", "path", "<>", 
+     "\"\<'!\>\""}], "]"}], ",", " ", 
+   RowBox[{"(", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"datafile", " ", "=", " ", 
+      RowBox[{"FileBaseName", "[", 
+       RowBox[{
+       "infofile", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], 
+       "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"filedata", "=", 
+      RowBox[{
+       RowBox[{"Import", "[", 
+        RowBox[{
+         RowBox[{"path", " ", "<>", "datafile", "<>", "\"\<.info\>\""}], ",", 
+         "\"\<Table\>\""}], "]"}], "\[LeftDoubleBracket]", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"3", ",", "5", ",", "7", ",", "9"}], "}"}], ",", "1"}], 
+       "\[RightDoubleBracket]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"dims", " ", "=", " ", 
+      RowBox[{"ConstantArray", "[", 
+       RowBox[{
+        RowBox[{
+        "filedata", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], 
+        ",", "3"}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"nsteps", " ", "=", 
+      RowBox[{
+      "filedata", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}], 
+     ";", "\[IndentingNewLine]", 
+     RowBox[{"mid", " ", "=", " ", 
+      RowBox[{"Round", "[", 
+       RowBox[{
+        RowBox[{
+        "dims", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], "/", 
+        "2"}], "]"}]}], ";"}], "\[IndentingNewLine]", ")"}]}], 
+  "]"}]}], "Input",
+ CellChangeTimes->{{3.57002262674133*^9, 3.570022627386367*^9}, {
+  3.5700228103068295`*^9, 3.570022816394178*^9}, {3.5700229261554556`*^9, 
+  3.5700229885500245`*^9}, {3.5700230622082376`*^9, 3.5700230795832314`*^9}}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -80,49 +96,59 @@ Cell["Quick glance at a slice of the data", "Section",
  CellChangeTimes->{{3.570021608211074*^9, 3.570021623790965*^9}}],
 
 Cell[BoxData[{
- RowBox[{"Dynamic", "[", 
-  RowBox[{"GraphicsGrid", "[", 
-   RowBox[{"{", 
-    RowBox[{"{", 
-     RowBox[{
-      RowBox[{"ListPlot", "[", 
-       RowBox[{
-        RowBox[{"arraydata", "\[LeftDoubleBracket]", 
-         RowBox[{"mid", ",", "mid", ",", ";;", ",", "5"}], 
-         "\[RightDoubleBracket]"}], ",", 
-        RowBox[{"Joined", "\[Rule]", "True"}], ",", 
-        RowBox[{"Axes", "\[Rule]", "False"}], ",", 
-        RowBox[{"Frame", "\[Rule]", "True"}], ",", 
-        RowBox[{"PlotRange", "\[Rule]", "All"}]}], "]"}], ",", 
-      RowBox[{"ListPlot", "[", 
-       RowBox[{
-        RowBox[{"arraydata", "\[LeftDoubleBracket]", 
-         RowBox[{"mid", ",", "mid", ",", ";;", ",", "1"}], 
-         "\[RightDoubleBracket]"}], ",", 
-        RowBox[{"Joined", "\[Rule]", "True"}], ",", 
-        RowBox[{"Axes", "\[Rule]", "False"}], ",", 
-        RowBox[{"Frame", "\[Rule]", "True"}], ",", 
-        RowBox[{"PlotRange", "\[Rule]", "All"}]}], "]"}]}], "}"}], "}"}], 
-   "]"}], "]"}], "\[IndentingNewLine]", 
- RowBox[{"ProgressIndicator", "[", 
-  RowBox[{"Dynamic", "[", 
-   RowBox[{"step", "/", "nsteps"}], "]"}], "]"}], "\[IndentingNewLine]", 
- RowBox[{"Do", "[", "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"data", " ", "=", " ", 
+   RowBox[{"{", "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Do", "[", 
   RowBox[{
    RowBox[{
-    RowBox[{"arraydata", " ", "=", " ", 
-     RowBox[{"Import", "[", 
+    RowBox[{"AppendTo", "[", 
+     RowBox[{"data", ",", " ", 
       RowBox[{
-       RowBox[{"path", " ", "<>", "datafile", "<>", "\"\<.\>\"", "<>", 
-        RowBox[{"ToString", "[", "step", "]"}], "<>", "\"\<.h5.gz\>\""}], ",", 
-       RowBox[{"{", 
-        RowBox[{"\"\<Datasets\>\"", ",", "\"\</DS1\>\""}], "}"}], ",", 
-       RowBox[{"\"\<DataEncoding\>\"", "\[Rule]", "\"\<GZIP\>\""}]}], "]"}]}],
-     ";"}], "\[IndentingNewLine]", ",", 
+       RowBox[{"Import", "[", 
+        RowBox[{
+         RowBox[{"path", " ", "<>", "datafile", "<>", "\"\<.\>\"", "<>", 
+          RowBox[{"ToString", "[", "step", "]"}], "<>", "\"\<.h5.gz\>\""}], 
+         ",", 
+         RowBox[{"{", 
+          RowBox[{"\"\<Datasets\>\"", ",", "\"\</DS1\>\""}], "}"}], ",", 
+         RowBox[{"\"\<DataEncoding\>\"", "\[Rule]", "\"\<GZIP\>\""}]}], "]"}],
+        "\[LeftDoubleBracket]", 
+       RowBox[{"mid", ",", "mid", ",", ";;", ",", ";;"}], 
+       "\[RightDoubleBracket]"}]}], "]"}], ";"}], ",", 
    RowBox[{"{", 
-    RowBox[{"step", ",", "3", ",", 
-     RowBox[{"nsteps", "-", "1"}], ",", "2"}], "}"}]}], "\[IndentingNewLine]",
-   "]"}]}], "Input"]
+    RowBox[{"step", ",", "1", ",", 
+     RowBox[{"nsteps", "-", "1"}], ",", "1"}], "}"}]}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Manipulate", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"GraphicsGrid", "[", 
+    RowBox[{
+     RowBox[{"{", "\[IndentingNewLine]", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"ListPlot", "[", 
+         RowBox[{
+          RowBox[{"data", "\[LeftDoubleBracket]", 
+           RowBox[{"i", ",", ";;", ",", "d"}], "\[RightDoubleBracket]"}], ",", 
+          RowBox[{"Joined", "\[Rule]", "True"}], ",", 
+          RowBox[{"PlotRange", "\[Rule]", "All"}]}], "]"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"d", ",", 
+          RowBox[{"{", 
+           RowBox[{"5", ",", "1", ",", "4"}], "}"}]}], "}"}]}], "]"}], 
+      "\[IndentingNewLine]", "}"}], ",", 
+     RowBox[{"ImageSize", "\[Rule]", "700"}]}], "]"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"i", ",", "1", ",", "\"\<Step\>\""}], "}"}], ",", "1", ",", 
+     RowBox[{"nsteps", "-", "1"}], ",", "1"}], "}"}]}], "\[IndentingNewLine]",
+   "]"}]}], "Input",
+ CellChangeTimes->{{3.5700235627708683`*^9, 3.5700236149078503`*^9}, {
+  3.570023740328024*^9, 3.5700237460713525`*^9}, {3.570023776929117*^9, 
+  3.5700237907829094`*^9}, {3.570023832838315*^9, 3.57002396317377*^9}, {
+  3.57002411353837*^9, 3.570024222073578*^9}}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -695,42 +721,42 @@ CellTagsIndex->{}
 Notebook[{
 Cell[CellGroupData[{
 Cell[579, 22, 105, 1, 71, "Section"],
-Cell[687, 25, 1663, 48, 192, "Input"]
+Cell[687, 25, 2505, 64, 212, "Input"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[2387, 78, 120, 1, 71, "Section"],
-Cell[2510, 81, 1830, 43, 152, "Input"]
+Cell[3229, 94, 120, 1, 71, "Section"],
+Cell[3352, 97, 2154, 53, 152, "Input"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[4377, 129, 238, 3, 71, "Section"],
+Cell[5543, 155, 238, 3, 71, "Section"],
 Cell[CellGroupData[{
-Cell[4640, 136, 5876, 126, 272, "Input"],
-Cell[10519, 264, 454, 8, 33, "Output"],
-Cell[10976, 274, 486, 9, 33, "Output"],
-Cell[11465, 285, 489, 9, 33, "Output"]
+Cell[5806, 162, 5876, 126, 272, "Input"],
+Cell[11685, 290, 454, 8, 33, "Output"],
+Cell[12142, 300, 486, 9, 33, "Output"],
+Cell[12631, 311, 489, 9, 33, "Output"]
 }, Open  ]],
-Cell[11969, 297, 8995, 191, 672, "Input"]
+Cell[13135, 323, 8995, 191, 672, "Input"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[21001, 493, 112, 1, 41, "Section"],
-Cell[21116, 496, 184, 4, 31, "Input"],
-Cell[21303, 502, 136, 2, 31, "Input"],
-Cell[21442, 506, 1633, 40, 52, "Input"],
-Cell[23078, 548, 3619, 83, 152, "Input"]
+Cell[22167, 519, 112, 1, 41, "Section"],
+Cell[22282, 522, 184, 4, 31, "Input"],
+Cell[22469, 528, 136, 2, 31, "Input"],
+Cell[22608, 532, 1633, 40, 52, "Input"],
+Cell[24244, 574, 3619, 83, 152, "Input"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[26734, 636, 101, 1, 41, "Section"],
+Cell[27900, 662, 101, 1, 41, "Section"],
 Cell[CellGroupData[{
-Cell[26860, 641, 169, 3, 31, "Input"],
-Cell[27032, 646, 250, 3, 30, "Output"]
+Cell[28026, 667, 169, 3, 31, "Input"],
+Cell[28198, 672, 250, 3, 30, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[27319, 654, 170, 3, 31, "Input"],
-Cell[27492, 659, 154, 2, 30, "Output"]
+Cell[28485, 680, 170, 3, 31, "Input"],
+Cell[28658, 685, 154, 2, 30, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[27683, 666, 170, 3, 31, "Input"],
-Cell[27856, 671, 157, 2, 30, "Output"]
+Cell[28849, 692, 170, 3, 31, "Input"],
+Cell[29022, 697, 157, 2, 30, "Output"]
 }, Open  ]]
 }, Closed]]
 }
