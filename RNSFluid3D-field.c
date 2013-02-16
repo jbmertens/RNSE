@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
               fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
                 = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
 
+      fflush(stdout);
       printf("\rWriting step %i of %i ...", s, STEPS);
       dumpstate(fieldsnext, fwrites, POINTS_TO_SAMPLE, data_dir, data_name);
       fwrites++;
