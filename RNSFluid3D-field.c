@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
     } // end write step
 
 
-    // #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
