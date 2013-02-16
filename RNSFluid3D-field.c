@@ -134,7 +134,9 @@ int main(int argc, char *argv[])
 
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
     for(i=0; i<POINTS; i++)
+    {
       for(j=0; j<POINTS; j++)
+      {
         for(k=0; k<POINTS; k++)
         {
           /* Work through normal Euler method. */
@@ -146,6 +148,7 @@ int main(int argc, char *argv[])
           // final state calculation next
           //   evolve(rks[0], fieldsnext, 1.0, &paq, i, j, k);
         }
+      }
 
 
     // store new field data
