@@ -39,8 +39,8 @@
 #define RANK 4                             /* dimension of fields array    */
 #define STORAGE (POINTS*POINTS*POINTS*DOF) /* space requirement            */
 
-#define STEPS               80            /* # of steps to run */
-#define STEPS_TO_RECORD     60            /* # of steps to record */
+#define STEPS               200            /* # of steps to run */
+#define STEPS_TO_RECORD     50             /* # of steps to record */
 #define POINTS_TO_SAMPLE    25             /* # of points along (x-)axis to
                                                sample */
 
@@ -57,12 +57,23 @@ typedef struct {
   simType fields[6];
   simType gradients[4][DOF];
   simType derivs2[4];
+  
+  /* constants */
   simType ut;
   simType ut2;
   simType u2;
-  simType uudu;
+  simType relw;
+  
+  /* Source terms */
   simType ji[4];
   simType Ji[4];
+
+  /* sums */
+  simType uudu;
+  simType srcsum;
+  simType trgrad;
+  simType udu;
+
 } PointData;
 
 /* FUNCTION PROTOTYPES */

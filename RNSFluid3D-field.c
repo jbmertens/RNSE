@@ -203,16 +203,17 @@ void jsource(PointData *paq)
   return;
 }
 
+
 /*
  * "source" calculations - compute modified fluid source term, for repeated use.
  */
 void Jsource(PointData *paq)
 {   
-  simType sum_spatial = sumvv(paq->fields, paq->ji);
+  simType sum_spatial = paq->srcsum;
   simType sum_covariant = sum_spatial + paq->ut * paq->ji[0];
   simType eos_factor = 1.0 + W_EOS;
   simType source_factor = sum_covariant +
-    W_EOS / (1.0 + (1.0 - W_EOS) * paq->u2) * (sum_spatial / eos_factor + paq->u2 * sum_covariant);
+    W_EOS / paq->relw * (sum_spatial / eos_factor + paq->u2 * sum_covariant);
 
   int i;
   for(i=1; i<=3; i++) {
@@ -232,13 +233,13 @@ void Jsource(PointData *paq)
 inline simType energy_evfn(PointData *paq)
 {
   return (
-    - W_EOSp1 * paq->ut / (1.0 - W_EOSm1 * paq->u2) * (
-      -W_EOSm1 / W_EOSp1 * sumvt(paq->fields, paq->gradients, 1, 0)
-      + sp_tr(paq->gradients)
+    - W_EOSp1 * paq->ut / paq->relw * (
+      -W_EOSm1 / W_EOSp1 * paq->udu
+      + paq->trgrad
       - paq->uudu / paq->ut2
     )
     - W_EOSp1 / paq->ut2 * sumvv(paq->fields, paq->Ji)
-    - (paq->ut * paq->ji[0] + sumvv(paq->fields, paq->ji)) / exp(paq->fields[0]) / paq->ut
+    - (paq->ut * paq->ji[0] + paq->srcsum) / exp(paq->fields[0]) / paq->ut
   );
 }
 
@@ -249,10 +250,10 @@ inline simType energy_evfn(PointData *paq)
 inline simType fluid_evfn(PointData *paq, int u)
 {
   return (
-    W_EOS * paq->ut * paq->fields[u] / (1.0 - W_EOSm1 * paq->u2 ) * (
-        sp_tr(paq->gradients)
+    W_EOS * paq->ut * paq->fields[u] / paq->relw * (
+        paq->trgrad
         - (
-          W_EOS * sumvt(paq->fields, paq->gradients, 1, 0) / W_EOSp1
+          W_EOS * paq->udu / W_EOSp1
           + paq->uudu
         ) / paq->ut2
       )
@@ -305,7 +306,7 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
   paq->u2 = magu2(paq);
   paq->ut = Ut(paq);
   paq->ut2 = Ut2(paq);
-  paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
+  paq->relw = (1.0 - W_EOSm1 * paq->u2);
 
   // [GRADIENTS]
   for(u=0; u<DOF; u++) {
@@ -322,6 +323,11 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
   // little j is source, big J is some wonko function of source
   jsource(paq);
   Jsource(paq);
+
+  paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
+  paq->srcsum = sumvv(paq->fields, paq->ji);
+  paq->trgrad = sp_tr(paq->gradients);
+  paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
 
   return;
 }
