@@ -34,6 +34,6 @@
                                                sample */
 
 /* array element access macro */
-#define INDEX(i,j,k,l) (DOF*POINTS*POINTS*i + DOF*POINTS*j + DOF*k + l)
+#define INDEX(i,j,k,l) (DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (l))
 
 #endif
