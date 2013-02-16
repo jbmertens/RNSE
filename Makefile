@@ -13,7 +13,7 @@ CC_OPTS = -lm -fopenmp -lhdf5
 ifeq ($(debug), 1)
 	CC_OPTIMIZE = -O0 -g -Wall -DDEBUG -std=c99
 else
-	CC_OPTIMIZE = -O2 -std=c99
+	CC_OPTIMIZE = -O3 -std=c99
 endif
 
 # Require all object files and then link

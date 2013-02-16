@@ -28,8 +28,8 @@
 #define RANK 4                             /* dimension of fields array    */
 #define STORAGE POINTS*POINTS*POINTS*DOF   /* space requirement            */
 
-#define STEPS               20            /* # of steps to run */
-#define STEPS_TO_RECORD     10            /* # of steps to record */
+#define STEPS               80            /* # of steps to run */
+#define STEPS_TO_RECORD     60            /* # of steps to record */
 #define POINTS_TO_SAMPLE    25             /* # of points along (x-)axis to
                                                sample */
 
