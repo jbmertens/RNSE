@@ -22,7 +22,7 @@ all: $(OBJ)
 
 # Just compile every .c file
 %.o: %.c
-	$(CC) -c $(CC_OPTS) $(CC_OPTIMIZE) -c $<
+	$(CC) $(CC_OPTIMIZE) -c $<
 
 clean:
 	rm $(EXEC) *.o
