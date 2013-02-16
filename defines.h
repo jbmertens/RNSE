@@ -18,7 +18,7 @@
 
 /* resolution parameters */
 #define SIZE    (4*R0)                         /* physical size in space */
-#define POINTS  25                             /* number of points on
+#define POINTS  100                             /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/20.0)
@@ -28,8 +28,8 @@
 #define RANK 4                             /* dimension of fields array    */
 #define STORAGE POINTS*POINTS*POINTS*DOF   /* space requirement            */
 
-#define STEPS               500            /* # of steps to run */
-#define STEPS_TO_RECORD     100            /* # of steps to record */
+#define STEPS               20            /* # of steps to run */
+#define STEPS_TO_RECORD     10            /* # of steps to record */
 #define POINTS_TO_SAMPLE    25             /* # of points along (x-)axis to
                                                sample */
 

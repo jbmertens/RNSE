@@ -277,10 +277,10 @@ simType derivative(simType *data, int ddim /* direction of derivative */, int di
 simType derivative2(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
 {
   if(ddim == 1) {
-    return (data[INDEX((i+1)%POINTS,j,k,dim)] - data[INDEX((i+POINTS-1)%POINTS,j,k,dim)] - 2*data[INDEX(i,j,k,dim)])/dx/dx;
+    return (data[INDEX((i+1)%POINTS,j,k,dim)] + data[INDEX((i+POINTS-1)%POINTS,j,k,dim)] - 2*data[INDEX(i,j,k,dim)])/dx/dx;
   }
   if(ddim == 2) {
-    return (data[INDEX(i,(j+1)%POINTS,k,dim)] - data[INDEX(i,(j+POINTS-1)%POINTS,k,dim)] - 2*data[INDEX(i,j,k,dim)])/dx/dx;
+    return (data[INDEX(i,(j+1)%POINTS,k,dim)] + data[INDEX(i,(j+POINTS-1)%POINTS,k,dim)] - 2*data[INDEX(i,j,k,dim)])/dx/dx;
   }
   if(ddim == 3) {
     return (data[INDEX(i,j,(k+1)%POINTS,dim)] + data[INDEX(i,j,(k+POINTS-1)%POINTS,dim)] - 2*data[INDEX(i,j,k,dim)])/dx/dx;
