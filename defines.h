@@ -33,9 +33,6 @@
 #define POINTS_TO_SAMPLE    25             /* # of points along (x-)axis to
                                                sample */
 
-#define FILE_DATA_DIR   "data/"            /* directory where files go     */
-#define FILE_DATA_NAME  "RNSE3Data"        /* basename for files           */
-
 /* array element access macro */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*i + DOF*POINTS*j + DOF*k + l)
 

@@ -45,8 +45,8 @@ simType derivative2(simType *data, int ddim, int dim, int i, int j, int k);
 simType dV(simType phi);
 
 /* write to file stuff */
-void writeinfo();
-void dumpstate(simType *fields, int fwrites, int datasize);
+void writeinfo(char *dir, char *root);
+void dumpstate(simType *fields, int fwrites, int datasize, char *dir, char *root);
 void readstate(simType *fields, int fwrites);
 
 /* evolution functions for different DOF's */
@@ -66,11 +66,25 @@ int main(int argc, char *argv[])
   int i, j, k, n, u, s;
 
   /* information about files */
-  // expect first argument passed in to be filename
-  printf("You passed in:\n");
-  for(i = 0; i < argc; i++) {
-    printf("%s\n", argv[i]);
+  if(argc != 3)
+  {
+    fprintf(stderr, "usage: %s <data_dir> <data_name>\n", argv[0]);
+    return EXIT_FAILURE;
   }
+  char *data_dir = argv[1];
+  char *data_name = argv[2];
+  /* ensure data_dir ends with '/' */
+  size_t len_dir_name = strlen(data_dir);
+  if(data_dir[len_dir_name - 1] != '/')
+  {
+    data_dir = (char*) malloc((len_dir_name + 2) * sizeof(char));
+    strcpy(data_dir, argv[1]);
+    data_dir[len_dir_name] = '/';
+    data_dir[len_dir_name + 1] = '\0';
+  }
+
+  /* create data_dir */
+  mkdir(data_dir, 0755);
 
   int fwrites = 0;
 
@@ -96,9 +110,8 @@ int main(int argc, char *argv[])
 
 
   /* print out sampling information */
-  printf( "%s",  "\nStarting simulation.  Storing data in " );
-  printf( "%s\n",  FILE_DATA_DIR                );
-  printf( "%s",  "\nWill be writing "             );
+  printf("Starting simulation.  Storing data in %s\n", data_dir);
+  printf("Will be writing ");
   printf( "%i",  STEPS_TO_RECORD              );
   printf( "%s",  " of "                   );
   printf( "%i",  STEPS                    );
@@ -118,7 +131,7 @@ int main(int argc, char *argv[])
   printf( "%1.2f", POINTS/2-R0/dx               );
   printf( "%s",  " voxels from edge).\n\n"          );
   /* also write this information to file */
-  writeinfo();
+  writeinfo(data_dir, data_name);
 
 
   /* initialize data */
@@ -165,7 +178,7 @@ int main(int argc, char *argv[])
                 = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
 
       printf("\rWriting step %i of %i ...", s, STEPS);
-      dumpstate(fieldsnext, fwrites, POINTS_TO_SAMPLE);
+      dumpstate(fieldsnext, fwrites, POINTS_TO_SAMPLE, data_dir, data_name);
       fwrites++;
     } // end write step
 
@@ -195,7 +208,7 @@ int main(int argc, char *argv[])
   }
 
   // dump all data from current simulation... perhaps can read back in later?  Maybe.
-  dumpstate(fields, fwrites, POINTS);
+  dumpstate(fields, fwrites, POINTS, data_dir, data_name);
   // done.
   printf("%s","\nSimulation complete.  ");
   printf("%i", fwrites);
@@ -336,15 +349,15 @@ simType dV(simType phi)
 /* 
  * Write simulation information to file.
  */
-void writeinfo()
+void writeinfo(char *dir, char *root)
 {
   char *infofile;
   infofile = (char *) malloc(200 * sizeof(char));
   FILE *datafile;
 
   /* write simulation parameters to file */
-  strcpy(infofile, FILE_DATA_DIR);
-  strcat(infofile, FILE_DATA_NAME);
+  strcpy(infofile, dir);
+  strcat(infofile, root);
   strcat(infofile, ".info");
   datafile = fopen(infofile, "w+");
   if( NULL == datafile ){ printf( "%s%s\n", "\nError opening file!\n", infofile ); }
@@ -370,7 +383,7 @@ void writeinfo()
  * Write current simulation state to file.  Should be able to handle arbitrary sized arrays.
  * The "datasize" parameter should be length of a cube.
  */
-void dumpstate(simType *fields, int fwrites, int datasize)
+void dumpstate(simType *fields, int fwrites, int datasize, char *dir, char *name)
 {
   char *filename, *buffer;
   filename = (char *) malloc(100 * sizeof(char));
@@ -378,8 +391,8 @@ void dumpstate(simType *fields, int fwrites, int datasize)
 
   /* file data for files */
   sprintf(buffer, "%d", fwrites);
-  strcpy(filename, FILE_DATA_DIR);
-  strcat(filename, FILE_DATA_NAME);
+  strcpy(filename, dir);
+  strcat(filename, name);
   strcat(filename, ".");
   strcat(filename, buffer);
   strcat(filename, ".h5.gz");
