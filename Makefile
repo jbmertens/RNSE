@@ -18,11 +18,11 @@ endif
 
 # Require all object files and then link
 all: $(OBJ)
-	$(CC) -o $(EXEC) $(CC_OPTS) $(CC_OPTIMIZE) $(OBJ)
+	$(CC) $(OBJ) -o $(EXEC) $(CC_OPTS) $(CC_OPTIMIZE)
 
 # Just compile every .c file
 %.o: %.c
-	$(CC) $(CC_OPTIMIZE) -c $<
+	$(CC) -c $< $(CC_OPTIMIZE)
 
 clean:
 	rm $(EXEC) *.o
