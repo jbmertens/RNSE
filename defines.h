@@ -1,6 +1,17 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+/* INCLUDES */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <hdf5.h>
+#include <zlib.h>
+#include <math.h>
+#include <sys/stat.h> /* mkdir() */
+#include <time.h>
+
+/* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
    are changed! */
 #define LAMBDA      0.01    /* potential height */
@@ -35,5 +46,34 @@
 
 /* array element access macro */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (l))
+
+/* TYPEDEFS */
+/* Precision/format we'd like to use for this simulation: */
+typedef double simType;
+
+/* STRUCTS */
+/* data structure for storing calculated quantities at a point */
+typedef struct {
+  simType fields[6];
+  simType gradients[4][DOF];
+  simType derivs2[4];
+  simType ut;
+  simType ut2;
+  simType u2;
+  simType uudu;
+  simType ji[4];
+  simType Ji[4];
+} PointData;
+
+/* FUNCTION PROTOTYPES */
+
+/* io.c */
+void writeinfo(char *dir, char *root);
+void dumpstate(simType *fields, int fwrites, int datasize, char *dir,
+  char *root);
+void readstate(simType *fields, int fwrites);
+
+/* inline functions for fast math */
+#include "math_util.h"
 
 #endif
