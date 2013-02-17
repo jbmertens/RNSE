@@ -24,27 +24,27 @@ int main(int argc, char *argv[])
   int i, j, k, n, u, s;
 
   /* information about files */
+  IOData filedata;
+  filedata.fwrites = 0;
   if(argc != 3)
   {
     fprintf(stderr, "usage: %s <data_dir> <data_name>\n", argv[0]);
     return EXIT_FAILURE;
   }
-  char *data_dir = argv[1];
-  char *data_name = argv[2];
+  filedata.data_dir = argv[1];
+  filedata.data_name = argv[2];
   /* ensure data_dir ends with '/' */
-  size_t len_dir_name = strlen(data_dir);
-  if(data_dir[len_dir_name - 1] != '/')
+  size_t len_dir_name = strlen(filedata.data_dir);
+  if(filedata.data_dir[len_dir_name - 1] != '/')
   {
-    data_dir = (char*) malloc((len_dir_name + 2) * sizeof(char));
-    strcpy(data_dir, argv[1]);
-    data_dir[len_dir_name] = '/';
-    data_dir[len_dir_name + 1] = '\0';
+    filedata.data_dir = (char*) malloc((len_dir_name + 2) * sizeof(char));
+    strcpy(filedata.data_dir, argv[1]);
+    filedata.data_dir[len_dir_name] = '/';
+    filedata.data_dir[len_dir_name + 1] = '\0';
   }
 
   /* create data_dir */
-  mkdir(data_dir, 0755);
-
-  int fwrites = 0;
+  mkdir(filedata.data_dir, 0755);
 
   /* Storage space for data on 3 dimensional grid. */
   simType *fields, *fieldsnext, **rks;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
 
   /* print out sampling information */
-  printf("Starting simulation.  Storing data in %s\n", data_dir);
+  printf("Starting simulation.  Storing data in %s\n", filedata.data_dir);
   printf("Will be writing %i of %i steps (sample every %i steps).\n",
     STEPS_TO_RECORD, STEPS, T_SAMPLEINT);
   printf("Writing %i along x-axis (sample every %i points on all axes).\n",
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     W_EOS, R0, POINTS/2-R0/dx);
 
   /* also write this information to file */
-  writeinfo(data_dir, data_name);
+  writeinfo(filedata);
 
   /* record simulation time - wall clock time! */
   time_t time_start = time(NULL);
@@ -97,13 +97,13 @@ int main(int argc, char *argv[])
 
         // scalar field
         fields[INDEX(i,j,k,4)] = 0.999057*tanh(sqrt(LAMBDA)*ETA/2*(
-                          sqrt(
-                            pow( (i*1.0-1.0*POINTS/2.0)*dx , 2)
-                            + pow( (j*1.0-1.0*POINTS/2.0)*dx , 2)
-                            + pow( (k*1.0-1.0*POINTS/2.0)*dx , 2)
-                          ) - R0
-                        )
-                      ) - 0.025063 ; // spherically symmetric soliton/"bubble" solution
+              sqrt(
+                pow( (i*1.0-1.0*POINTS/2.0)*dx , 2)
+                + pow( (j*1.0-1.0*POINTS/2.0)*dx , 2)
+                + pow( (k*1.0-1.0*POINTS/2.0)*dx , 2)
+              ) - R0
+            )
+          ) - 0.025063 ; // spherically symmetric soliton/"bubble" solution
 
         // time-derivative of scalar field
         fields[INDEX(i,j,k,5)] = 0;
@@ -127,12 +127,13 @@ int main(int argc, char *argv[])
 
       fflush(stdout);
       printf("\rWriting step %i of %i ...", s, STEPS);
-      dumpstate(fieldsnext, fwrites, POINTS_TO_SAMPLE, data_dir, data_name);
-      fwrites++;
+      filedata.datasize = POINTS_TO_SAMPLE;
+      dumpstate(fieldsnext, filedata);
+      filedata.fwrites++;
     } // end write step
 
 
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(4)
     for(i=0; i<POINTS; i++)
     {
       for(j=0; j<POINTS; j++)
@@ -178,10 +179,11 @@ int main(int argc, char *argv[])
   time_t time_end = time(NULL);
 
   // dump all data from current simulation... perhaps can read back in later?  Maybe.
-  dumpstate(fields, fwrites, POINTS, data_dir, data_name);
+  filedata.datasize = POINTS;
+  dumpstate(fields, filedata);
   // done.
   printf("Simulation complete.\n");
-  printf("%i steps were written to disk.\n", fwrites);
+  printf("%i steps were written to disk.\n", filedata.fwrites);
   printf("Simulation took %ld seconds.\n", (long)(time_end - time_start));
   
   return EXIT_SUCCESS;
@@ -356,6 +358,3 @@ void evolve(simType *initial, simType *final, simType coeff, PointData *paq,
   // field derivative
    final[INDEX(i,j,k,5)] = paq->fields[5] + coeff*dt*ddtfield_evfn(paq);
 }
-
-
-

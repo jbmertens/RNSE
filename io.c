@@ -1,18 +1,18 @@
-
 #include "defines.h"
+
 
 /* 
  * Write simulation information to file.
  */
-void writeinfo(char *dir, char *root)
+void writeinfo(IOData filedata)
 {
   char *infofile;
   infofile = (char *) malloc(200 * sizeof(char));
   FILE *datafile;
 
   /* write simulation parameters to file */
-  strcpy(infofile, dir);
-  strcat(infofile, root);
+  strcpy(infofile, filedata.data_dir);
+  strcat(infofile, filedata.data_name);
   strcat(infofile, ".info");
   datafile = fopen(infofile, "w+");
   if( datafile == NULL )
@@ -37,16 +37,16 @@ void writeinfo(char *dir, char *root)
  * Write current simulation state to file.  Should be able to handle arbitrary sized arrays.
  * The "datasize" parameter should be length of a cube.
  */
-void dumpstate(simType *fields, int fwrites, int datasize, char *dir, char *name)
+void dumpstate(simType *fields, IOData filedata)
 {
   char *filename, *buffer;
   filename = (char *) malloc(100 * sizeof(char));
   buffer = (char *) malloc(5 * sizeof(char));
 
   /* file data for files */
-  sprintf(buffer, "%d", fwrites);
-  strcpy(filename, dir);
-  strcat(filename, name);
+  sprintf(buffer, "%d", filedata.fwrites);
+  strcpy(filename, filedata.data_dir);
+  strcat(filename, filedata.data_name);
   strcat(filename, ".");
   strcat(filename, buffer);
   strcat(filename, ".h5.gz");
@@ -55,7 +55,7 @@ void dumpstate(simType *fields, int fwrites, int datasize, char *dir, char *name
   herr_t      status;
   htri_t      avail;
   H5Z_filter_t  filter_type;
-  hsize_t     dims[RANK] = {datasize, datasize, datasize, DOF},
+  hsize_t     dims[RANK] = {filedata.datasize, filedata.datasize, filedata.datasize, DOF},
           maxdims[RANK] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED},
           chunk[RANK] = {6, 6, 6, 6};
 
@@ -77,8 +77,9 @@ void dumpstate(simType *fields, int fwrites, int datasize, char *dir, char *name
   free(buffer);
 }
 
+
 // need to write this function.
-void readstate(simType *fields, int fwrites)
+void readstate(simType *fields, IOData filedata)
 {
 
 }

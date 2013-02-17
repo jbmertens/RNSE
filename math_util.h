@@ -1,4 +1,3 @@
-
 #include "defines.h"
 
 /* PROTOTYPES */
@@ -30,7 +29,6 @@ inline simType magu2(PointData *paq)
 }
 
 
-
 /* 
  * (U^t)^2 - commonly used quantity, stored so we only need to use it once.
  */
@@ -39,6 +37,7 @@ inline simType Ut2(PointData *paq)
   return 1 + magu2(paq);
 }
 
+
 /* 
  * U^t - commonly used quantity, stored so we only need to use it once.
  */
@@ -46,7 +45,6 @@ inline simType Ut(PointData *paq)
 {
   return sqrt(Ut2(paq));
 }
-
 
 
 /* 
@@ -145,6 +143,7 @@ inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4])
   }
   return total;
 }
+
 
 /*
  * Function to take spatial trace of rank-2 tensor.

@@ -11,6 +11,7 @@
 #include <sys/stat.h> /* mkdir() */
 #include <time.h>
 #include <omp.h>
+#include <fftw3.h>
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
@@ -30,7 +31,7 @@
 
 /* resolution parameters */
 #define SIZE    (4*R0)                         /* physical size in space */
-#define POINTS  100                            /* number of points on
+#define POINTS  200                            /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/20.0)
@@ -40,9 +41,9 @@
 #define RANK 4                             /* dimension of fields array    */
 #define STORAGE (POINTS*POINTS*POINTS*DOF) /* space requirement            */
 
-#define STEPS               200            /* # of steps to run */
-#define STEPS_TO_RECORD     50             /* # of steps to record */
-#define POINTS_TO_SAMPLE    25             /* # of points along (x-)axis to
+#define STEPS               500            /* # of steps to run */
+#define STEPS_TO_RECORD     100             /* # of steps to record */
+#define POINTS_TO_SAMPLE    50             /* # of points along (x-)axis to
                                                sample */
 
 /* array element access macro */
@@ -77,15 +78,23 @@ typedef struct {
 
 } PointData;
 
-/* FUNCTION PROTOTYPES */
 
-/* io.c */
-void writeinfo(char *dir, char *root);
-void dumpstate(simType *fields, int fwrites, int datasize, char *dir,
-  char *root);
-void readstate(simType *fields, int fwrites);
+/* io functionality prototypes */
+typedef struct {
+  char *data_dir;
+  char *data_name;
+  int fwrites;
+  int datasize;
+} IOData;
+
+void writeinfo(IOData filedata);
+void dumpstate(simType *fields, IOData filedata);
+void readstate(simType *fields, IOData filedata);
 
 /* inline functions for fast math */
 #include "math_util.h"
+
+/* fft functionality */
+#include "fft_util.h"
 
 #endif
