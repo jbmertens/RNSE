@@ -20,8 +20,8 @@ void writeinfo(IOData filedata)
     printf("Error opening file: %s\n", infofile );
   }
   fprintf(datafile, "# Writing simulation.\n");
-  fprintf(datafile, "#Points Sampled:\n%d\n", POINTS_TO_SAMPLE);
-  fprintf(datafile, "# Steps recorded:\n%d\n", STEPS_TO_RECORD);
+  fprintf(datafile, "# Points Sampled:\n%d\n", POINTS_TO_SAMPLE);
+  fprintf(datafile, "# Steps recorded (possibly incorrect if (steps/recorded) isn't an integer):\n%d\n", STEPS_TO_SAMPLE);
   fprintf(datafile, "# dx/dt (timestep):\n%f\n", dx/dt);
   fprintf(datafile, "# Equation of state parameter w:\n%f\n", W_EOS);
   fprintf(datafile, "# Physical lattice dimensions:\n%f %f %f\n",

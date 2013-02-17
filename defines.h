@@ -42,7 +42,8 @@
 #define STORAGE (POINTS*POINTS*POINTS*DOF) /* space requirement            */
 
 #define STEPS               500            /* # of steps to run */
-#define STEPS_TO_RECORD     100             /* # of steps to record */
+#define STEPS_TO_SAMPLE     100            /* # of steps to record, undersampled */
+#define STEPS_TO_DUMP       5              /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50             /* # of points along (x-)axis to
                                                sample */
 
@@ -91,10 +92,13 @@ void writeinfo(IOData filedata);
 void dumpstate(simType *fields, IOData filedata);
 void readstate(simType *fields, IOData filedata);
 
+
+/* fft functionality */
+void hartleydump(simType *fields, simType *storage, IOData filedata);
+
+
 /* inline functions for fast math */
 #include "math_util.h"
 
-/* fft functionality */
-#include "fft_util.h"
 
 #endif

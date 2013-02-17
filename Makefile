@@ -7,7 +7,7 @@ OBJ = $(patsubst %.c, %.o, $(SRC))
 
 EXEC = rnse
 
-CC_OPTS = -lm -fopenmp -lhdf5
+CC_OPTS = -lm -lfftw3 -fopenmp -lhdf5
 
 # enable debug mode
 ifeq ($(debug), 1)

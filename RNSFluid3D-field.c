@@ -62,15 +62,19 @@ int main(int argc, char *argv[])
 
   /* calculate intervals to sample at */
   /* interval of steps to sample at */
-  const int T_SAMPLEINT = (int) ( (simType)STEPS / (simType)STEPS_TO_RECORD );
+  const int T_SAMPLEINT = (int) ( (simType)STEPS / (simType)STEPS_TO_SAMPLE );
   /* position-interval to sample at */
   const int X_SAMPLEINT = (int) ( (simType)POINTS / (simType)POINTS_TO_SAMPLE );
+  /* position-interval to sample at */
+  const int T_DUMPINT = (int) ( (simType)STEPS / (simType)STEPS_TO_DUMP );
 
 
   /* print out sampling information */
-  printf("Starting simulation.  Storing data in %s\n", filedata.data_dir);
-  printf("Will be writing %i of %i steps (sample every %i steps).\n",
-    STEPS_TO_RECORD, STEPS, T_SAMPLEINT);
+  printf("\nStarting simulation.  Storing data in %s\n", filedata.data_dir);
+  printf("Will be sampling every %i steps (recording about %i of %i steps).\n",
+    T_SAMPLEINT, STEPS/T_SAMPLEINT, STEPS);
+  printf("And full dump every %i steps (recording about %i of %i steps).\n",
+    T_DUMPINT, STEPS/T_DUMPINT, STEPS);
   printf("Writing %i along x-axis (sample every %i points on all axes).\n",
     POINTS_TO_SAMPLE, X_SAMPLEINT);
   printf("Setting w=%1.2f, R_0=%1.2f, (~%1.2f voxels from edge).\n\n",
@@ -125,12 +129,21 @@ int main(int argc, char *argv[])
               fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
                 = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
 
-      fflush(stdout);
       printf("\rWriting step %i of %i ...", s, STEPS);
+      fflush(stdout);
       filedata.datasize = POINTS_TO_SAMPLE;
       dumpstate(fieldsnext, filedata);
       filedata.fwrites++;
     } // end write step
+
+    // write full dump and Hartley Transform data
+    if(s % T_DUMPINT == 0)
+    {
+      /* fieldsnext isn't being used, so we can pass it in as storage */
+      printf("\nDumping HT for step %i of %i ...\n", s, STEPS);
+      fflush(stdout);
+      hartleydump(fields, fieldsnext, filedata);
+    }
 
 
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(4)
