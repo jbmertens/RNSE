@@ -1,9 +1,3 @@
-/*
-To-do's:
-- take in file name as argument
-- Some basic checks (T_SAMPLEINT > 0, X_SAMPLEINT > 0, etc)
-*/
-
 /* RNSE includes */
 #include "defines.h"
 
@@ -26,9 +20,9 @@ int main(int argc, char *argv[])
   /* information about files */
   IOData filedata;
   filedata.fwrites = 0;
-  if(argc != 3)
+  if(argc != 4)
   {
-    fprintf(stderr, "usage: %s <data_dir> <data_name>\n", argv[0]);
+    fprintf(stderr, "usage: %s <data_dir> <data_name> <coupling>\n", argv[0]);
     return EXIT_FAILURE;
   }
   filedata.data_dir = argv[1];
@@ -46,6 +40,10 @@ int main(int argc, char *argv[])
   /* create data_dir */
   mkdir(filedata.data_dir, 0755);
 
+  /* Preallocated storage space for calculated quantities */
+  PointData paq;
+  paq.xi = atof(argv[3]);
+
   /* Storage space for data on 3 dimensional grid. */
   simType *fields, *fieldsnext, **rks;
   fields    = (simType *) malloc(STORAGE * sizeof(simType));
@@ -56,9 +54,6 @@ int main(int argc, char *argv[])
   {
     rks[n] = (simType *) malloc(STORAGE * sizeof(simType));
   }
-
-  /* Preallocated storage space for calculated quantities */
-  PointData paq;
 
   /* calculate intervals to sample at */
   /* interval of steps to sample at */
@@ -208,7 +203,7 @@ int main(int argc, char *argv[])
  */
 void jsource(PointData *paq)
 {
-  simType coup = XI*(
+  simType coup = - paq->xi * (
           paq->ut * paq->fields[5]
           + sumvt(paq->fields, paq->gradients, 1, 4)
         );
@@ -300,7 +295,7 @@ inline simType ddtfield_evfn(PointData *paq)
 {
   return (
     paq->derivs2[1] + paq->derivs2[2] + paq->derivs2[3]
-    - XI*(
+    + paq->xi * (
       paq->ut * paq->fields[5]
       + sumvt(paq->fields, paq->gradients, 1, 4)
     ) - dV(paq->fields[4])

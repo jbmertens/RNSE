@@ -24,7 +24,6 @@
 #define W_EOS       0.333   /* EOS parameter */
 #define W_EOSm1     (W_EOS - 1.0)
 #define W_EOSp1     (W_EOS + 1.0)
-#define XI          (-0.01)   /* fluid coupling */
 
 /*1 (log of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
 #define DOF 6  
@@ -60,8 +59,11 @@ typedef struct {
   simType fields[6];
   simType gradients[4][DOF];
   simType derivs2[4];
+
+  /* Constants */
+  double xi;
   
-  /* constants */
+  /* calculated quantities */
   simType ut;
   simType ut2;
   simType u2;
