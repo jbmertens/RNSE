@@ -82,24 +82,9 @@ typedef struct {
 } PointData;
 
 
-/* io functionality prototypes */
-typedef struct {
-  char *data_dir;
-  char *data_name;
-  int fwrites;
-  int datasize;
-} IOData;
-
-void writeinfo(IOData filedata);
-void dumpstate(simType *fields, IOData filedata);
-void readstate(simType *fields, IOData filedata);
-
-
-/* fft functionality */
-void hartleydump(simType *fields, simType *storage, IOData filedata);
-
-
-/* inline functions for fast math */
+/* Project functionality */
+#include "io.h"
+#include "fft_util.h"
 #include "math_util.h"
 
 

@@ -1,5 +1,6 @@
 #include "defines.h"
 
+
 void hartleydump(simType *fields, simType *storage, IOData filedata)
 {
   /* set values in storage array - storage should still contain STORAGE amount of storage. */

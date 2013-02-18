@@ -1,3 +1,6 @@
+#ifndef MATH_H
+#define MATH_H
+
 #include "defines.h"
 
 /* PROTOTYPES */
@@ -163,3 +166,5 @@ inline simType dV(simType phi)
   return LAMBDA/2*(phi*phi - ETA*ETA)*phi + EPSILON*LAMBDA*ETA*ETA*ETA;
 }
 
+
+#endif
