@@ -7,7 +7,8 @@ OBJ = $(patsubst %.c, %.o, $(SRC))
 
 EXEC = rnse
 
-CC_OPTS = -lm -lfftw3 -fopenmp -lhdf5
+CC_OPTS = -fopenmp
+CC_LINKS = -lm -lfftw3 -fopenmp -lhdf5
 
 # enable debug mode
 ifeq ($(debug), 1)
@@ -22,7 +23,7 @@ endif
 
 # Require all object files and then link
 all: $(OBJ)
-	$(CC) $(OBJ) -o $(EXEC) $(CC_OPTS) $(CC_OPTIMIZE)
+	$(CC) $(OBJ) -o $(EXEC) $(CC_OPTS) $(CC_OPTIMIZE) $(CC_LINKS)
 
 # Just compile every .c file
 %.o: %.c
