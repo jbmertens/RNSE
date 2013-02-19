@@ -12,9 +12,9 @@ CC_LINKS = -lm -lfftw3 -fopenmp -lhdf5
 
 # enable debug mode
 ifeq ($(debug), 1)
-	CC_OPTIMIZE = -O0 -g -Wall -DDEBUG -std=c11
+	CC_OPTIMIZE = -O0 -g -Wall -DDEBUG -std=c99
 else
-	CC_OPTIMIZE = -O3 -std=c11
+	CC_OPTIMIZE = -O3 -std=c99
 endif
 
 ifeq ($(fast), 1)

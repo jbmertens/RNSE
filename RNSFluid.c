@@ -4,10 +4,10 @@
 /* evolution functions for different DOF's */
 void jsource(PointData *paq);
 void Jsource(PointData *paq);
-inline simType energy_evfn(PointData *paq);
-inline simType fluid_evfn(PointData *paq, int u);
-inline simType field_evfn(PointData *paq);
-inline simType ddtfield_evfn(PointData *paq);
+static inline simType energy_evfn(PointData *paq);
+static inline simType fluid_evfn(PointData *paq, int u);
+static inline simType field_evfn(PointData *paq);
+static inline simType ddtfield_evfn(PointData *paq);
 void calculatequantities(simType *fields, PointData *paq, int i, int j, int k);
 void evolve(simType *initial, simType *final, simType coeff, PointData *paq, int i, int j, int k);
 
@@ -16,17 +16,31 @@ int main(int argc, char *argv[])
 {
   /* iterators here first. */
   int i, j, k, n, u, s;
+  int read_initial_step = 0;
 
   /* information about files */
   IOData filedata;
   filedata.fwrites = 0;
-  if(argc != 4)
+  if(argc < 2 || argc > 5)
   {
-    fprintf(stderr, "usage: %s <data_dir> <data_name> <coupling>\n", argv[0]);
+    fprintf(stderr, "usage: %s <coupling> [<data_dir> [<data_name> [<initial_state>]]]\n", argv[0]);
     return EXIT_FAILURE;
   }
-  filedata.data_dir = argv[1];
-  filedata.data_name = argv[2];
+  /* use non-defaults if provided */
+  if(argc >= 3) {
+    filedata.data_dir = argv[2];
+  } else {
+    filedata.data_dir = DEFAULT_DATA_DIR;
+  }
+  if(argc >= 4) {
+    filedata.data_name = argv[3];
+  } else {
+    filedata.data_name = DEFAULT_DATA_NAME;
+  }
+  if(argc >= 5) {
+    filedata.read_data_name = argv[4];
+    read_initial_step = 1;
+  }
   /* ensure data_dir ends with '/' */
   size_t len_dir_name = strlen(filedata.data_dir);
   if(filedata.data_dir[len_dir_name - 1] != '/')
@@ -36,13 +50,12 @@ int main(int argc, char *argv[])
     filedata.data_dir[len_dir_name] = '/';
     filedata.data_dir[len_dir_name + 1] = '\0';
   }
-
   /* create data_dir */
   mkdir(filedata.data_dir, 0755);
 
   /* Preallocated storage space for calculated quantities */
   PointData paq;
-  paq.xi = atof(argv[3]);
+  paq.xi = atof(argv[1]);
 
   /* Storage space for data on 3 dimensional grid. */
   simType *fields, *fieldsnext, **rks;
@@ -78,36 +91,43 @@ int main(int argc, char *argv[])
   /* also write this information to file */
   writeinfo(filedata);
 
+  if(0 == read_initial_step)
+  {
+    /* initialize data */
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
+          // 0-component is log of energy density
+          fields[INDEX(i,j,k,0)] = log(0.1);
+
+          // velocity pattern
+          fields[INDEX(i,j,k,1)] = 0.0;
+          fields[INDEX(i,j,k,2)] = 0.0;
+          fields[INDEX(i,j,k,3)] = 0.0;
+
+          // scalar field
+          fields[INDEX(i,j,k,4)] = 0.999057*tanh(sqrt(LAMBDA)*ETA/2*(
+                sqrt(
+                  pow( (i*1.0-1.0*POINTS/2.0)*dx , 2)
+                  + pow( (j*1.0-1.0*POINTS/2.0)*dx , 2)
+                  + pow( (k*1.0-1.0*POINTS/2.0)*dx , 2)
+                ) - R0
+              )
+            ) - 0.025063 ; // spherically symmetric soliton/"bubble" solution
+
+          // time-derivative of scalar field
+          fields[INDEX(i,j,k,5)] = 0;
+        }
+  }
+  else
+  {
+    readstate(fields, filedata);
+  }
+
+
   /* record simulation time - wall clock time! */
   time_t time_start = time(NULL);
-
-  /* initialize data */
-  for(i=0; i<POINTS; i++)
-    for(j=0; j<POINTS; j++)
-      for(k=0; k<POINTS; k++)
-      {
-        // 0-component is log of energy density
-        fields[INDEX(i,j,k,0)] = log(0.1);
-
-        // velocity pattern
-        fields[INDEX(i,j,k,1)] = 0.0;
-        fields[INDEX(i,j,k,2)] = 0.0;
-        fields[INDEX(i,j,k,3)] = 0.0;
-
-        // scalar field
-        fields[INDEX(i,j,k,4)] = 0.999057*tanh(sqrt(LAMBDA)*ETA/2*(
-              sqrt(
-                pow( (i*1.0-1.0*POINTS/2.0)*dx , 2)
-                + pow( (j*1.0-1.0*POINTS/2.0)*dx , 2)
-                + pow( (k*1.0-1.0*POINTS/2.0)*dx , 2)
-              ) - R0
-            )
-          ) - 0.025063 ; // spherically symmetric soliton/"bubble" solution
-
-        // time-derivative of scalar field
-        fields[INDEX(i,j,k,5)] = 0;
-      }
-
 
   /* Actual Evolution code */
   for (s=0; s<STEPS; s++)
@@ -186,7 +206,7 @@ int main(int argc, char *argv[])
 
   time_t time_end = time(NULL);
 
-  // dump all data from current simulation... perhaps can read back in later?  Maybe.
+  // dump all data from current simulation... perhaps can read back in later.
   filedata.datasize = POINTS;
   dumpstate(fields, filedata);
   // done.
@@ -244,7 +264,7 @@ void Jsource(PointData *paq)
 /*
  * DOF evolution - log(energy density) evolution.
  */
-inline simType energy_evfn(PointData *paq)
+static inline simType energy_evfn(PointData *paq)
 {
   return (
     - W_EOSp1 * paq->ut / paq->relw * (
@@ -261,7 +281,7 @@ inline simType energy_evfn(PointData *paq)
 /*
  * DOF evolution - fluid velocity component evolution.
  */
-inline simType fluid_evfn(PointData *paq, int u)
+static inline simType fluid_evfn(PointData *paq, int u)
 {
   return (
     W_EOS * paq->ut * paq->fields[u] / paq->relw * (
@@ -282,7 +302,7 @@ inline simType fluid_evfn(PointData *paq, int u)
 /*
  * DOF evolution - scalar field.
  */
-inline simType field_evfn(PointData *paq)
+static inline simType field_evfn(PointData *paq)
 {
   return paq->fields[5];
 }
@@ -291,7 +311,7 @@ inline simType field_evfn(PointData *paq)
 /*
  * DOF evolution - time derivative of field (w ~ d\phi/dt).
  */
-inline simType ddtfield_evfn(PointData *paq)
+static inline simType ddtfield_evfn(PointData *paq)
 {
   return (
     paq->derivs2[1] + paq->derivs2[2] + paq->derivs2[3]

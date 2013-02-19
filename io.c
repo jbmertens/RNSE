@@ -75,11 +75,37 @@ void dumpstate(simType *fields, IOData filedata)
 
   free(filename);
   free(buffer);
+
+  return;
 }
 
 
 // need to write this function.
 void readstate(simType *fields, IOData filedata)
 {
+  char *filename;
+  filename = (char *) malloc(100 * sizeof(char));
 
+  /* file data for files */
+  strcpy(filename, filedata.data_dir);
+  strcat(filename, filedata.read_data_name);
+
+  hid_t           file, dset, dcpl;    /* Handles */
+  herr_t          status;
+  unsigned int    flags, filter_info;
+
+  file = H5Fopen (filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+  dset = H5Dopen2 (file, "DS1", H5P_DEFAULT);
+
+  dcpl = H5Dget_create_plist (dset);
+  status = H5Dread (dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+              fields);
+
+  status = H5Pclose (dcpl);
+  status = H5Dclose (dset);
+  status = H5Fclose (file);
+
+  free(filename);
+
+  return;
 }

@@ -5,6 +5,7 @@
 typedef struct {
   char *data_dir;
   char *data_name;
+  char *read_data_name;
   int fwrites;
   int datasize;
 } IOData;

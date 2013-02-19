@@ -46,6 +46,10 @@
 #define POINTS_TO_SAMPLE    50             /* # of points along (x-)axis to
                                                sample */
 
+/* some defaults. */
+#define DEFAULT_DATA_DIR      "data"
+#define DEFAULT_DATA_NAME     "data"
+
 /* array element access macro */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (l))
 
