@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[     30630,        757]
-NotebookOptionsPosition[     29207,        703]
-NotebookOutlinePosition[     29592,        720]
-CellTagsIndexPosition[     29549,        717]
+NotebookDataLength[     31124,        766]
+NotebookOptionsPosition[     29628,        711]
+NotebookOutlinePosition[     30084,        729]
+CellTagsIndexPosition[     30041,        726]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -25,6 +25,10 @@ Cell["File Information", "Section",
 
 Cell[BoxData[{
  RowBox[{
+  RowBox[{"SetDirectory", "[", 
+   RowBox[{"NotebookDirectory", "[", "]"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
   RowBox[{"slash", " ", "=", 
    RowBox[{"If", "[", 
     RowBox[{
@@ -32,27 +36,27 @@ Cell[BoxData[{
      "\"\<\\\\\>\"", ",", " ", "\"\</\>\""}], "]"}]}], 
   ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"path", " ", "=", " ", 
-   RowBox[{
-    RowBox[{"SetDirectory", "[", 
-     RowBox[{"NotebookDirectory", "[", "]"}], "]"}], "<>", "slash", "<>", 
-    "\"\<data\>\"", "<>", "slash"}]}], ";"}], "\[IndentingNewLine]", 
- RowBox[{
   RowBox[{"infofile", " ", "=", " ", 
    RowBox[{"FileNames", "[", 
-    RowBox[{"path", "<>", "\"\<*.info\>\""}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
+    RowBox[{"\"\<*.info\>\"", ",", " ", 
+     RowBox[{"NotebookDirectory", "[", "]"}], ",", " ", "\[Infinity]"}], 
+    "]"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{"If", "[", 
   RowBox[{
    RowBox[{
     RowBox[{"Length", "[", "infofile", "]"}], " ", "\[NotEqual]", " ", "1"}], 
    ",", " ", 
    RowBox[{"Print", "[", 
-    RowBox[{
-    "\"\<Unable to find unique .info file in '\>\"", "<>", "path", "<>", 
-     "\"\<'!\>\""}], "]"}], ",", " ", 
+    RowBox[{"\"\<Unable to find unique .info file in '\>\"", "<>", 
+     RowBox[{"NotebookDirectory", "[", "]"}], "<>", 
+     "\"\<' or subdirectories!\>\""}], "]"}], ",", " ", 
    RowBox[{"(", "\[IndentingNewLine]", 
     RowBox[{
+     RowBox[{"path", " ", "=", " ", 
+      RowBox[{"DirectoryName", "[", 
+       RowBox[{
+       "infofile", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], 
+       "]"}]}], ";", "\[IndentingNewLine]", 
      RowBox[{"datafile", " ", "=", " ", 
       RowBox[{"FileBaseName", "[", 
        RowBox[{
@@ -62,8 +66,9 @@ Cell[BoxData[{
       RowBox[{
        RowBox[{"Import", "[", 
         RowBox[{
-         RowBox[{"path", " ", "<>", "datafile", "<>", "\"\<.info\>\""}], ",", 
-         "\"\<Table\>\""}], "]"}], "\[LeftDoubleBracket]", 
+         RowBox[{
+         "infofile", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], 
+         ",", "\"\<Table\>\""}], "]"}], "\[LeftDoubleBracket]", 
        RowBox[{
         RowBox[{"{", 
          RowBox[{"3", ",", "5", ",", "7", ",", "9"}], "}"}], ",", "1"}], 
@@ -86,8 +91,11 @@ Cell[BoxData[{
         "2"}], "]"}]}], ";"}], "\[IndentingNewLine]", ")"}]}], 
   "]"}]}], "Input",
  CellChangeTimes->{{3.57002262674133*^9, 3.570022627386367*^9}, {
-  3.5700228103068295`*^9, 3.570022816394178*^9}, {3.5700229261554556`*^9, 
-  3.5700229885500245`*^9}, {3.5700230622082376`*^9, 3.5700230795832314`*^9}}]
+   3.5700228103068295`*^9, 3.570022816394178*^9}, {3.5700229261554556`*^9, 
+   3.5700229885500245`*^9}, {3.5700230622082376`*^9, 3.5700230795832314`*^9}, 
+   3.570283499162428*^9, {3.570283559229397*^9, 3.570283590389758*^9}, {
+   3.570283641738974*^9, 3.570283648038847*^9}, {3.570283781230184*^9, 
+   3.570283845664947*^9}}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -702,10 +710,11 @@ Cell[BoxData["\<\"test3.gif\"\>"], "Output",
 }, Closed]]
 },
 Evaluator->"Local",
-WindowSize->{1584, 775},
-WindowMargins->{{0, Automatic}, {Automatic, 0}},
+WindowSize->{1594, 848},
+WindowMargins->{{-7, Automatic}, {-7, Automatic}},
+PrivateNotebookOptions->{"VersionedStylesheet"->{"Default.nb"[8.] -> False}},
 ShowSelection->True,
-FrontEndVersion->"8.0 for Microsoft Windows (64-bit) (February 23, 2011)",
+FrontEndVersion->"9.0 for Linux x86 (64-bit) (January 25, 2013)",
 StyleDefinitions->"Default.nb"
 ]
 (* End of Notebook Content *)
@@ -720,43 +729,43 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[579, 22, 105, 1, 71, "Section"],
-Cell[687, 25, 2505, 64, 212, "Input"]
+Cell[579, 22, 105, 1, 81, "Section"],
+Cell[687, 25, 2926, 72, 253, "Input"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[3229, 94, 120, 1, 71, "Section"],
-Cell[3352, 97, 2154, 53, 152, "Input"]
+Cell[3650, 102, 120, 1, 81, "Section"],
+Cell[3773, 105, 2154, 53, 187, "Input"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[5543, 155, 238, 3, 71, "Section"],
+Cell[5964, 163, 238, 3, 81, "Section"],
 Cell[CellGroupData[{
-Cell[5806, 162, 5876, 126, 272, "Input"],
-Cell[11685, 290, 454, 8, 33, "Output"],
-Cell[12142, 300, 486, 9, 33, "Output"],
-Cell[12631, 311, 489, 9, 33, "Output"]
+Cell[6227, 170, 5876, 126, 272, "Input"],
+Cell[12106, 298, 454, 8, 33, "Output"],
+Cell[12563, 308, 486, 9, 33, "Output"],
+Cell[13052, 319, 489, 9, 33, "Output"]
 }, Open  ]],
-Cell[13135, 323, 8995, 191, 672, "Input"]
+Cell[13556, 331, 8995, 191, 672, "Input"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[22167, 519, 112, 1, 41, "Section"],
-Cell[22282, 522, 184, 4, 31, "Input"],
-Cell[22469, 528, 136, 2, 31, "Input"],
-Cell[22608, 532, 1633, 40, 52, "Input"],
-Cell[24244, 574, 3619, 83, 152, "Input"]
+Cell[22588, 527, 112, 1, 51, "Section"],
+Cell[22703, 530, 184, 4, 31, "Input"],
+Cell[22890, 536, 136, 2, 31, "Input"],
+Cell[23029, 540, 1633, 40, 52, "Input"],
+Cell[24665, 582, 3619, 83, 152, "Input"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[27900, 662, 101, 1, 41, "Section"],
+Cell[28321, 670, 101, 1, 51, "Section"],
 Cell[CellGroupData[{
-Cell[28026, 667, 169, 3, 31, "Input"],
-Cell[28198, 672, 250, 3, 30, "Output"]
+Cell[28447, 675, 169, 3, 31, "Input"],
+Cell[28619, 680, 250, 3, 30, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[28485, 680, 170, 3, 31, "Input"],
-Cell[28658, 685, 154, 2, 30, "Output"]
+Cell[28906, 688, 170, 3, 31, "Input"],
+Cell[29079, 693, 154, 2, 30, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[28849, 692, 170, 3, 31, "Input"],
-Cell[29022, 697, 157, 2, 30, "Output"]
+Cell[29270, 700, 170, 3, 31, "Input"],
+Cell[29443, 705, 157, 2, 30, "Output"]
 }, Open  ]]
 }, Closed]]
 }
