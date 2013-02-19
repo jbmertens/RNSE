@@ -5,26 +5,26 @@
 
 /* PROTOTYPES */
 /* functions to calculate commonly used quantities */
-inline simType Ut(PointData *paq);
-inline simType Ut2(PointData *paq);
-inline simType magu2(PointData *paq);
+static inline simType Ut(PointData *paq);
+static inline simType Ut2(PointData *paq);
+static inline simType magu2(PointData *paq);
 
 /* sums, derivatives, such. */
-inline simType sumvv(simType v1[4], simType v2[4]);
-inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc, int s);
-inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4]);
-inline simType sp_tr(simType t1[4][DOF]);
-inline simType derivative(simType *data, int ddim, int dim, int i, int j, int k);
-inline simType derivative2(simType *data, int ddim, int dim, int i, int j, int k);
+static inline simType sumvv(simType v1[4], simType v2[4]);
+static inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc, int s);
+static inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4]);
+static inline simType sp_tr(simType t1[4][DOF]);
+static inline simType derivative(simType *data, int ddim, int dim, int i, int j, int k);
+static inline simType derivative2(simType *data, int ddim, int dim, int i, int j, int k);
 
 /* potential function */
-inline simType dV(simType phi);
+static inline simType dV(simType phi);
 
 
 /* 
  * U^2 - commonly used quantity, stored so we only need to use it once.
  */
-inline simType magu2(PointData *paq)
+static inline simType magu2(PointData *paq)
 {
   return paq->fields[1]*paq->fields[1]
       + paq->fields[2]*paq->fields[2]
@@ -35,7 +35,7 @@ inline simType magu2(PointData *paq)
 /* 
  * (U^t)^2 - commonly used quantity, stored so we only need to use it once.
  */
-inline simType Ut2(PointData *paq)
+static inline simType Ut2(PointData *paq)
 {
   return 1 + magu2(paq);
 }
@@ -44,7 +44,7 @@ inline simType Ut2(PointData *paq)
 /* 
  * U^t - commonly used quantity, stored so we only need to use it once.
  */
-inline simType Ut(PointData *paq)
+static inline simType Ut(PointData *paq)
 {
   return sqrt(Ut2(paq));
 }
@@ -53,7 +53,7 @@ inline simType Ut(PointData *paq)
 /* 
  * Taking derivatives.  Assumes toroidial boundary conditions in each direction.
  */
-inline simType derivative(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
+static inline simType derivative(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
 {
   /* taking modulo here for each point */
   switch(ddim)
@@ -80,7 +80,7 @@ inline simType derivative(simType *data, int ddim /* direction of derivative */,
 /* 
  * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
  */
-inline simType derivative2(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
+static inline simType derivative2(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
 {
   switch(ddim)
   {
@@ -108,7 +108,7 @@ inline simType derivative2(simType *data, int ddim /* direction of derivative */
 /*
  * Sum function - spatial sum of two 4-vectors.
  */
-inline simType sumvv(simType v1[4], simType v2[4])
+static inline simType sumvv(simType v1[4], simType v2[4])
 {
   return v1[1] * v2[1] + v1[2] * v2[2] + v1[3] * v2[3];
 }
@@ -117,7 +117,7 @@ inline simType sumvv(simType v1[4], simType v2[4])
 /*
  * Overload to give spatial sum of 4-vector and a component of rank-2 tensor.
  */
-inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc /* Sum with row (1) or column (2)? */, int s /* row/col to sum over */)
+static inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc /* Sum with row (1) or column (2)? */, int s /* row/col to sum over */)
 {
   switch(rc)
   {
@@ -136,7 +136,7 @@ inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc /* Sum with row (
  * Overload to give full spatial inner product of 2 vectors and rank-2 tensor.
  * First vector is summed with first tensor index, second with second.
  */
-inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4])
+static inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4])
 {
   simType total = 0;
   int i;
@@ -151,7 +151,7 @@ inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4])
 /*
  * Function to take spatial trace of rank-2 tensor.
  */
-inline simType sp_tr(simType t1[4][DOF])
+static inline simType sp_tr(simType t1[4][DOF])
 {
   return t1[1][1] + t1[2][2] + t1[3][3];
 }
@@ -160,7 +160,7 @@ inline simType sp_tr(simType t1[4][DOF])
 /* 
  * Symmetry breaking potential - \phi^4 with linear perturbation.
  */
-inline simType dV(simType phi)
+static inline simType dV(simType phi)
 {
   // return 0;
   return LAMBDA/2*(phi*phi - ETA*ETA)*phi + EPSILON*LAMBDA*ETA*ETA*ETA;
