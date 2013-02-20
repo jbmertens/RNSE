@@ -1,16 +1,6 @@
 /* RNSE includes */
 #include "defines.h"
 
-/* evolution functions for different DOF's */
-void jsource(PointData *paq);
-void Jsource(PointData *paq);
-static inline simType energy_evfn(PointData *paq);
-static inline simType fluid_evfn(PointData *paq, int u);
-static inline simType field_evfn(PointData *paq);
-static inline simType ddtfield_evfn(PointData *paq);
-void calculatequantities(simType *fields, PointData *paq, int i, int j, int k);
-void evolve(simType *initial, simType *final, simType coeff, PointData *paq, int i, int j, int k);
-
 
 int main(int argc, char *argv[])
 {
@@ -26,7 +16,9 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage: %s <coupling> [<data_dir> [<data_name> [<initial_state>]]]\n", argv[0]);
     return EXIT_FAILURE;
   }
+
   /* use non-defaults if provided */
+  setXI(atof(argv[1]));
   if(argc >= 3) {
     filedata.data_dir = argv[2];
   } else {
@@ -46,16 +38,16 @@ int main(int argc, char *argv[])
   if(filedata.data_dir[len_dir_name - 1] != '/')
   {
     filedata.data_dir = (char*) malloc((len_dir_name + 2) * sizeof(char));
-    strcpy(filedata.data_dir, argv[1]);
+    strcpy(filedata.data_dir, argv[2]);
     filedata.data_dir[len_dir_name] = '/';
     filedata.data_dir[len_dir_name + 1] = '\0';
   }
+
   /* create data_dir */
   mkdir(filedata.data_dir, 0755);
 
   /* Preallocated storage space for calculated quantities */
   PointData paq;
-  paq.xi = atof(argv[1]);
 
   /* Storage space for data on 3 dimensional grid. */
   simType *fields, *fieldsnext, **rks;
@@ -68,21 +60,39 @@ int main(int argc, char *argv[])
     rks[n] = (simType *) malloc(STORAGE * sizeof(simType));
   }
 
-  /* calculate intervals to sample at */
-  /* interval of steps to sample at */
-  const int T_SAMPLEINT = (int) ( (simType)STEPS / (simType)STEPS_TO_SAMPLE );
-  /* position-interval to sample at */
-  const int X_SAMPLEINT = (int) ( (simType)POINTS / (simType)POINTS_TO_SAMPLE );
-  /* position-interval to sample at */
-  const int T_DUMPINT = (int) ( (simType)STEPS / (simType)STEPS_TO_DUMP );
 
+  if(STEPS < STEPS_TO_SAMPLE || POINTS < POINTS_TO_SAMPLE || STEPS < STEPS_TO_DUMP)
+  {
+    fprintf(stderr, "# of samples should be larger than total number of steps/points.");
+    return EXIT_FAILURE;
+  }
+
+  /* calculate intervals to sample at */
+  int T_SAMPLEINT;
+  int X_SAMPLEINT;
+  int T_DUMPINT;
+  if(STEPS_TO_SAMPLE == 0) {
+    T_SAMPLEINT = STEPS+1;
+  } else {
+    T_SAMPLEINT = (int) floor( (simType)STEPS / (simType)STEPS_TO_SAMPLE );
+  }
+  if(POINTS_TO_SAMPLE == 0) {
+    X_SAMPLEINT = POINTS+1;
+  } else {
+    X_SAMPLEINT = (int) floor( (simType)POINTS / (simType)POINTS_TO_SAMPLE );
+  }
+  if(STEPS_TO_DUMP == 0) {
+    T_DUMPINT = STEPS+1;
+  } else {
+    T_DUMPINT = (int) floor( (simType)STEPS / (simType)STEPS_TO_DUMP );
+  }
 
   /* print out sampling information */
   printf("\nStarting simulation.  Storing data in %s\n", filedata.data_dir);
   printf("Will be sampling every %i steps (recording about %i of %i steps).\n",
-    T_SAMPLEINT, STEPS/T_SAMPLEINT, STEPS);
-  printf("And full dump every %i steps (recording about %i of %i steps).\n",
-    T_DUMPINT, STEPS/T_DUMPINT, STEPS);
+    T_SAMPLEINT, STEPS/(T_SAMPLEINT+1), STEPS);
+  printf("Full dump output every %i steps (recording about %i of %i steps).\n",
+    T_DUMPINT, STEPS/(T_DUMPINT+1), STEPS);
   printf("Writing %i along x-axis (sample every %i points on all axes).\n",
     POINTS_TO_SAMPLE, X_SAMPLEINT);
   printf("Setting w=%1.2f, R_0=%1.2f, (~%1.2f voxels from edge).\n\n",
@@ -93,7 +103,7 @@ int main(int argc, char *argv[])
 
   if(0 == read_initial_step)
   {
-    /* initialize data */
+    /* initialize data in static bubble configuration */
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
@@ -130,7 +140,7 @@ int main(int argc, char *argv[])
   time_t time_start = time(NULL);
 
   /* Actual Evolution code */
-  for (s=0; s<STEPS; s++)
+  for (s=1; s<=STEPS; s++)
   {
 
     // write data if necessary
@@ -160,7 +170,6 @@ int main(int argc, char *argv[])
       hartleydump(fields, fieldsnext, filedata);
     }
 
-
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(4)
     for(i=0; i<POINTS; i++)
     {
@@ -179,7 +188,6 @@ int main(int argc, char *argv[])
         }
       }
     }
-
 
     // store new field data
     for(i=0; i<POINTS; i++)
@@ -206,7 +214,7 @@ int main(int argc, char *argv[])
 
   time_t time_end = time(NULL);
 
-  // dump all data from current simulation... perhaps can read back in later.
+  // At end, dump all data from current simulation.
   filedata.datasize = POINTS;
   dumpstate(fields, filedata);
   // done.
@@ -223,7 +231,7 @@ int main(int argc, char *argv[])
  */
 void jsource(PointData *paq)
 {
-  simType coup = - paq->xi * (
+  simType coup = - getXI() * (
           paq->ut * paq->fields[5]
           + sumvt(paq->fields, paq->gradients, 1, 4)
         );
@@ -315,7 +323,7 @@ static inline simType ddtfield_evfn(PointData *paq)
 {
   return (
     paq->derivs2[1] + paq->derivs2[2] + paq->derivs2[3]
-    + paq->xi * (
+    + getXI() * (
       paq->ut * paq->fields[5]
       + sumvt(paq->fields, paq->gradients, 1, 4)
     ) - dV(paq->fields[4])

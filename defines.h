@@ -30,7 +30,7 @@
 
 /* resolution parameters */
 #define SIZE    (4*R0)                         /* physical size in space */
-#define POINTS  200                            /* number of points on
+#define POINTS  100                            /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/20.0)
@@ -40,9 +40,9 @@
 #define RANK 4                             /* dimension of fields array    */
 #define STORAGE (POINTS*POINTS*POINTS*DOF) /* space requirement            */
 
-#define STEPS               500            /* # of steps to run */
-#define STEPS_TO_SAMPLE     100            /* # of steps to record, undersampled */
-#define STEPS_TO_DUMP       5              /* # of steps to give a full dump of and take DHT */
+#define STEPS               50            /* # of steps to run */
+#define STEPS_TO_SAMPLE     10            /* # of steps to record, undersampled */
+#define STEPS_TO_DUMP       0              /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50             /* # of points along (x-)axis to
                                                sample */
 
@@ -63,9 +63,6 @@ typedef struct {
   simType fields[6];
   simType gradients[4][DOF];
   simType derivs2[4];
-
-  /* Constants */
-  double xi;
   
   /* calculated quantities */
   simType ut;
@@ -84,9 +81,18 @@ typedef struct {
   simType udu;
 
 } PointData;
+/* file information storage */
+typedef struct {
+  char *data_dir;
+  char *data_name;
+  char *read_data_name;
+  int fwrites;
+  int datasize;
+} IOData;
 
 
 /* Project functionality */
+#include "RNSFluid.h"
 #include "io.h"
 #include "fft_util.h"
 #include "math_util.h"
