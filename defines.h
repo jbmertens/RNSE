@@ -40,11 +40,17 @@
 #define RANK 4                             /* dimension of fields array    */
 #define STORAGE (POINTS*POINTS*POINTS*DOF) /* space requirement            */
 
-#define STEPS               50            /* # of steps to run */
+#define MAX_STEPS           50            /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     10            /* # of steps to record, undersampled */
-#define STEPS_TO_DUMP       0              /* # of steps to give a full dump of and take DHT */
-#define POINTS_TO_SAMPLE    50             /* # of points along (x-)axis to
+#define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
+#define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to
                                                sample */
+
+#define STOP_CELL           10            /* Check for negative field value (eg, bubble wall)
+                                                this many voxels away from the boundary.
+                                                If the field value in this cell becomes negative,
+                                                the simulation should stop running.
+                                                Use negative value for no stop. */
 
 /* some defaults. */
 #define DEFAULT_DATA_DIR      "data"

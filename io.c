@@ -26,7 +26,7 @@ void writeinfo(IOData filedata)
   fprintf(datafile, "# Equation of state parameter w:\n%f\n", W_EOS);
   fprintf(datafile, "# Physical lattice dimensions:\n%f %f %f\n",
     SIZE, SIZE, SIZE);
-  fprintf(datafile, "# Total number of steps run:\n%d\n", STEPS);
+  fprintf(datafile, "# Maximum number of steps run:\n%d\n", MAX_STEPS);
 
   fclose(datafile);
   free(infofile);

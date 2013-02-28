@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
   filedata.fwrites = 0;
   if(argc < 2 || argc > 5)
   {
-    fprintf(stderr, "usage: %s <coupling> [<data_dir> [<data_name> [<initial_state>]]]\n", argv[0]);
+    fprintf(stderr, "usage: %s <coupling> [data_dir [data_name [initial_state]]]\n", argv[0]);
     return EXIT_FAILURE;
   }
 
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   }
 
 
-  if(STEPS < STEPS_TO_SAMPLE || POINTS < POINTS_TO_SAMPLE || STEPS < STEPS_TO_DUMP)
+  if(MAX_STEPS < STEPS_TO_SAMPLE || POINTS < POINTS_TO_SAMPLE || MAX_STEPS < STEPS_TO_DUMP)
   {
     fprintf(stderr, "# of samples should be larger than total number of steps/points.");
     return EXIT_FAILURE;
@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
   int X_SAMPLEINT;
   int T_DUMPINT;
   if(STEPS_TO_SAMPLE == 0) {
-    T_SAMPLEINT = STEPS+1;
+    T_SAMPLEINT = MAX_STEPS+1;
   } else {
-    T_SAMPLEINT = (int) floor( (simType)STEPS / (simType)STEPS_TO_SAMPLE );
+    T_SAMPLEINT = (int) floor( (simType)MAX_STEPS / (simType)STEPS_TO_SAMPLE );
   }
   if(POINTS_TO_SAMPLE == 0) {
     X_SAMPLEINT = POINTS+1;
@@ -82,17 +82,17 @@ int main(int argc, char *argv[])
     X_SAMPLEINT = (int) floor( (simType)POINTS / (simType)POINTS_TO_SAMPLE );
   }
   if(STEPS_TO_DUMP == 0) {
-    T_DUMPINT = STEPS+1;
+    T_DUMPINT = MAX_STEPS+1;
   } else {
-    T_DUMPINT = (int) floor( (simType)STEPS / (simType)STEPS_TO_DUMP );
+    T_DUMPINT = (int) floor( (simType)MAX_STEPS / (simType)STEPS_TO_DUMP );
   }
 
   /* print out sampling information */
   printf("\nStarting simulation.  Storing data in %s\n", filedata.data_dir);
   printf("Will be sampling every %i steps (recording about %i of %i steps).\n",
-    T_SAMPLEINT, STEPS/(T_SAMPLEINT+1), STEPS);
+    T_SAMPLEINT, MAX_STEPS/(T_SAMPLEINT+1), MAX_STEPS);
   printf("Full dump output every %i steps (recording about %i of %i steps).\n",
-    T_DUMPINT, STEPS/(T_DUMPINT+1), STEPS);
+    T_DUMPINT, MAX_STEPS/(T_DUMPINT+1), MAX_STEPS);
   printf("Writing %i along x-axis (sample every %i points on all axes).\n",
     POINTS_TO_SAMPLE, X_SAMPLEINT);
   printf("Setting w=%1.2f, R_0=%1.2f, (~%1.2f voxels from edge).\n\n",
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
   time_t time_start = time(NULL);
 
   /* Actual Evolution code */
-  for (s=1; s<=STEPS; s++)
+  for (s=1; s<=MAX_STEPS; s++)
   {
 
     // write data if necessary
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
               fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
                 = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
 
-      printf("\rWriting step %i of %i ...", s, STEPS);
+      printf("\rWriting step %i of %i ...", s, MAX_STEPS);
       fflush(stdout);
       filedata.datasize = POINTS_TO_SAMPLE;
       dumpstate(fieldsnext, filedata);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
     if(s % T_DUMPINT == 0)
     {
       /* fieldsnext isn't being used, so we can pass it in as storage */
-      printf("\nDumping HT for step %i of %i ...\n", s, STEPS);
+      printf("\nDumping HT for step %i of %i ...\n", s, MAX_STEPS);
       fflush(stdout);
       hartleydump(fields, fieldsnext, filedata);
     }
@@ -209,6 +209,12 @@ int main(int argc, char *argv[])
               fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
 #endif
           }
+
+    if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < 0)
+    {
+      printf("Bubble wall has hit stop condition - ending simulation.\n");
+      break;
+    }
 
   }
 
