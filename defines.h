@@ -25,7 +25,7 @@
 #define W_EOSm1     (W_EOS - 1.0)
 #define W_EOSp1     (W_EOS + 1.0)
 
-/*1 (log of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
+/*1 (ln of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
 #define DOF 6  
 
 /* resolution parameters */
@@ -86,6 +86,11 @@ typedef struct {
   simType trgrad;
   simType udu;
 
+  /* S^{TT}_{ij} */
+  simType STT[6]; // 6 independent components.   S_11 => [0]; S_12 => [1]; S_13 => [2];
+                  // Index mapping goes as:      S_22 => [3]; S_23 => [4]; S_33 => [5];
+                  // can calculate mapping as S_ij => [(7-i)*i/2-4+j]
+
 } PointData;
 /* file information storage */
 typedef struct {
@@ -99,6 +104,7 @@ typedef struct {
 
 /* Project functionality */
 #include "RNSFluid.h"
+#include "SETEvolution.h"
 #include "io.h"
 #include "fft_util.h"
 #include "math_util.h"
