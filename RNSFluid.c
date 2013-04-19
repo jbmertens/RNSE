@@ -51,13 +51,13 @@ int main(int argc, char *argv[])
 
   /* Fluid/field storage space for data on 3 dimensional grid. */
   simType *fields, *fieldsnext, **rks;
-  fields      = (simType *) malloc(STORAGE * sizeof(simType));
-  fieldsnext  = (simType *) malloc(STORAGE * sizeof(simType));
+  fields      = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
+  fieldsnext  = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
   /* extra storage for intermediate RK steps */
   rks = (simType **) malloc(RK_STEPS * sizeof(simType *));
   for(n = 0; n < RK_STEPS; n++)
   {
-    rks[n] = (simType *) malloc(STORAGE * sizeof(simType));
+    rks[n] = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
   }
 
   /* Gravitational perturbation storage */
