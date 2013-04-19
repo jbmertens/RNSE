@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <hdf5.h>
-#include <zlib.h>
 #include <math.h>
 #include <sys/stat.h> /* mkdir() */
 #include <time.h>
@@ -36,10 +35,12 @@
 #define dt      (dx/20.0)
 
 /* storage parameters */
-#define RK_STEPS 0                         /* Usually RK Method Order - 1  */
-#define RANK 4                             /* dimension of fields array    */
-#define STORAGE (POINTS*POINTS*POINTS*DOF) /* space requirement            */
+#define RK_STEPS 0                            /* Usually RK Method Order - 1        */
+#define RANK 4                                /* dimension of fields array          */
+#define GRID_STORAGE (POINTS*POINTS*POINTS)   /* space requirement for just grid    */
+#define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid */
 
+/* simulation sampling information */
 #define MAX_STEPS           50            /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     10            /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
@@ -86,12 +87,23 @@ typedef struct {
   simType trgrad;
   simType udu;
 
-  /* S^{TT}_{ij} */
-  simType STT[6]; // 6 independent components.   S_11 => [0]; S_12 => [1]; S_13 => [2];
-                  // Index mapping goes as:      S_22 => [3]; S_23 => [4]; S_33 => [5];
-                  // can calculate mapping as S_ij => [(7-i)*i/2-4+j]
+  /* S^{TT}_{ij}
+    Gauge choices and coordinate choices allow us to only calculate two components.
+    Of the original 9 components of h_ij, we can constrain a given number of components:
+      Symmetric => 3
+      Transverse => 3
+      Traceless => 1
+    Giving 9-3-3-1 = 2 independent degrees of freedom.
+    However, degeneracies may exist around certain values.  Evolving 3 independent values
+    quantities helps break this degeneracy, and also allows for consistency checks.
+
+    Here, we evolve h_11, h_13, and h_33.  See writeup for specifics on consistency checking
+    and formulation behind the evolution.
+   */
+  simType STT[3];
 
 } PointData;
+
 /* file information storage */
 typedef struct {
   char *data_dir;
@@ -104,7 +116,7 @@ typedef struct {
 
 /* Project functionality */
 #include "RNSFluid.h"
-#include "SETEvolution.h"
+#include "MetricEvolution.h"
 #include "io.h"
 #include "fft_util.h"
 #include "math_util.h"

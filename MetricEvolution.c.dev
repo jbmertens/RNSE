@@ -12,20 +12,20 @@ void evolve_hij(simType *metric_pert)
 }
 
 /*
- * Return S^{TT}_{ij} at a point.
+ * Calculate S^{TT}_{ij} at a point.
  */
 void set_stt(PointData *paq, int i, int j, int k)
 {
   // S_ij = T_ij - 1/3 \delta_ij * T_k^k.
   //      = (e+p)U^iU^j + d^ifd^jf - 1/3(\delta_ij)*( trace of previous terms )
+  // The above is traceless, but not yet transverse.
 
-  // store data in preallocated space.
-  // first two terms:
+  // But here, we only need to calculate the first two terms of STT.
   int a, b;
   for(a=1; a<=3; a++) {
     for(b=a; b<=3; b++) {
       paq->STT[(7-a)*a/2-4+b] = pow(paq->gradients[a][5],2)
-                                  + W_EOSp1 * exp(paq->fields[0]) * paq->fields[a] * paq->fields[b];
+            + W_EOSp1 * exp(paq->fields[0]) * paq->fields[a] * paq->fields[b];
     }
   }
 
@@ -43,4 +43,13 @@ void set_stt(PointData *paq, int i, int j, int k)
   return;
 }
 
+void gw_evolve(simType *hij, simType *lij, simType *STTij, PointData *paq, 
+  int i, int j, int k)
+{
+  set_stt(paq, i, j, k);
 
+  // Stress energy tensor density
+  STTij[INDEX(i,j,k,0)] = paq->STT;
+
+  return;
+}

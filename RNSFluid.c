@@ -49,9 +49,9 @@ int main(int argc, char *argv[])
   /* Preallocated storage space for calculated quantities */
   PointData paq;
 
-  /* Storage space for data on 3 dimensional grid. */
+  /* Fluid/field storage space for data on 3 dimensional grid. */
   simType *fields, *fieldsnext, **rks;
-  fields    = (simType *) malloc(STORAGE * sizeof(simType));
+  fields      = (simType *) malloc(STORAGE * sizeof(simType));
   fieldsnext  = (simType *) malloc(STORAGE * sizeof(simType));
   /* extra storage for intermediate RK steps */
   rks = (simType **) malloc(RK_STEPS * sizeof(simType *));
@@ -60,7 +60,14 @@ int main(int argc, char *argv[])
     rks[n] = (simType *) malloc(STORAGE * sizeof(simType));
   }
 
+  /* Gravitational perturbation storage */
+  // let's just evolve 2 degrees of freedom for now
+//  simType *hij, *lij, *STTij;
+//  hij = (simType *) malloc(GRID_STORAGE * 2 * sizeof(simType));
+//  lij = (simType *) malloc(GRID_STORAGE * 2 * sizeof(simType));
+//  STTij = (simType *) malloc(GRID_STORAGE * sizeof(simType));
 
+  /* some validation for sampling rates */
   if(MAX_STEPS < STEPS_TO_SAMPLE || POINTS < POINTS_TO_SAMPLE || MAX_STEPS < STEPS_TO_DUMP)
   {
     fprintf(stderr, "# of samples should be larger than total number of steps/points.");
@@ -136,7 +143,7 @@ int main(int argc, char *argv[])
   }
 
 
-  /* record simulation time - wall clock time! */
+  /* record simulation time / wall clock time */
   time_t time_start = time(NULL);
 
   /* Actual Evolution code */
@@ -146,7 +153,7 @@ int main(int argc, char *argv[])
     // write data if necessary
     if(s % T_SAMPLEINT == 0)
     {
-      // fieldsnext is no longer used, so we can re-use it to store an undersampled array of data:
+      // fieldsnext is not being used yet, so we can use it to store an undersampled array of data:
       for(i=0; i<POINTS_TO_SAMPLE; i++)
         for(j=0; j<POINTS_TO_SAMPLE; j++)
           for(k=0; k<POINTS_TO_SAMPLE; k++)
@@ -161,7 +168,7 @@ int main(int argc, char *argv[])
       filedata.fwrites++;
     } // end write step
 
-    // write full dump and Hartley Transform data
+    // write full dump and Hartley Transform data if appropriate
     if(s % T_DUMPINT == 0)
     {
       /* fieldsnext isn't being used, so we can pass it in as storage */
@@ -179,6 +186,7 @@ int main(int argc, char *argv[])
         {
           /* Work through normal Euler method. */
           evolve(fields, fieldsnext, 1.0, &paq, i, j, k);
+          // gw_evolve(hij, lij, STTij, &paq, i, j, k);
 
           /* Work through 2nd-order RK method. */
           // midpoint calculation first

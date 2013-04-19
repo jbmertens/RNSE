@@ -2,6 +2,6 @@
 #define METRICEVOLUTION_H
 
 /* Stress Energy Tensor (SET) functionality */
-void set_stt(PointData *paq, i, j, k);
+void set_stt(PointData *paq, int i, int j, int k);
 
 #endif
