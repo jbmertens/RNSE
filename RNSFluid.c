@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
       hartleydump(fields, fieldsnext, filedata);
     }
 
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(4)
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
     for(i=0; i<POINTS; i++)
     {
       for(j=0; j<POINTS; j++)
