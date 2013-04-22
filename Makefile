@@ -1,13 +1,13 @@
 # Generic Makefile
 
-CC= gcc
+CC = gcc
 
 SRC = $(wildcard *.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
 
 EXEC = rnse
 
-CC_OPTS = -fopenmp
+CC_OPTS = -fopenmp -std=gnu99
 CC_LINKS = -lm -lfftw3 -fopenmp -lhdf5
 
 # enable debug mode

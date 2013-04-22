@@ -11,6 +11,8 @@
 #include <time.h>
 #include <omp.h>
 #include <fftw3.h>
+#include <ctype.h>
+#include <unistd.h> /* getopt */
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
@@ -28,8 +30,8 @@
 #define DOF 6  
 
 /* resolution parameters */
-#define SIZE    (4*R0)                         /* physical size in space */
-#define POINTS  ((long long) 800)              /* number of points on
+#define SIZE    (6*R0)                         /* physical size in space */
+#define POINTS  ((long long) 512)              /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/20.0)

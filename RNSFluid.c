@@ -7,32 +7,50 @@ int main(int argc, char *argv[])
   /* iterators here first. */
   int i, j, k, n, u, s;
   int read_initial_step = 0;
+  int threads = 2;
 
   /* information about files */
   IOData filedata;
   filedata.fwrites = 0;
-  if(argc < 2 || argc > 5)
-  {
-    fprintf(stderr, "usage: %s <coupling> [data_dir [data_name [initial_state]]]\n", argv[0]);
-    return EXIT_FAILURE;
-  }
+  filedata.data_dir = DEFAULT_DATA_DIR;
+  filedata.data_name = DEFAULT_DATA_NAME;
 
-  /* use non-defaults if provided */
-  setXI(atof(argv[1]));
-  if(argc >= 3) {
-    filedata.data_dir = argv[2];
-  } else {
-    filedata.data_dir = DEFAULT_DATA_DIR;
-  }
-  if(argc >= 4) {
-    filedata.data_name = argv[3];
-  } else {
-    filedata.data_name = DEFAULT_DATA_NAME;
-  }
-  if(argc >= 5) {
-    filedata.read_data_name = argv[4];
-    read_initial_step = 1;
-  }
+  // read in and process non-default options
+  int index;
+  int c;
+  opterr = 0;
+  /* -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads */
+  while((c = getopt(argc, argv, "cofit")) != -1)
+    switch(c)
+    {
+      case 'c':
+        setXI(atof(optarg));
+        break;
+      case 'o':
+        filedata.data_dir = optarg;
+        break;
+      case 'f':
+        filedata.data_name = optarg;
+        break;
+      case 'i':
+        filedata.read_data_name = optarg;
+        read_initial_step = 1;
+        break;
+      case 't':
+        threads = atof(optarg);
+        break;
+      case '?':
+        if (optopt == 'c')
+          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+        else if(isprint(optopt))
+          fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+        else
+          fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+      default:
+        fprintf(stderr, "usage: %s -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads\n", argv[0]);
+        abort();
+    }
+
   /* ensure data_dir ends with '/' */
   size_t len_dir_name = strlen(filedata.data_dir);
   if(filedata.data_dir[len_dir_name - 1] != '/')
@@ -177,7 +195,7 @@ int main(int argc, char *argv[])
       hartleydump(fields, fieldsnext, filedata);
     }
 
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(2)
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
     {
       for(j=0; j<POINTS; j++)
