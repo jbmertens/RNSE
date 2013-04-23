@@ -14,7 +14,7 @@ void evolve(simType *initial, simType *final, simType coeff, PointData *paq, int
 /* Deal with fluid coupling. */
 static inline simType getXI();
 static inline void setXI(simType xi);
-static simType XI;
+static simType XI = 0;
 
 /* get/set fluid coupling parameter. */
 static inline void setXI(simType xi)

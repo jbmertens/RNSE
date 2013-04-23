@@ -7,7 +7,7 @@ OBJ = $(patsubst %.c, %.o, $(SRC))
 
 EXEC = rnse
 
-CC_OPTS = -fopenmp -std=gnu99
+CC_OPTS = -fopenmp
 CC_LINKS = -lm -lfftw3 -fopenmp -lhdf5
 
 # enable debug mode

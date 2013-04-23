@@ -2,7 +2,7 @@
 #include "defines.h"
 
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
   /* iterators here first. */
   int i, j, k, n, u, s;
@@ -16,15 +16,29 @@ int main(int argc, char *argv[])
   filedata.data_name = DEFAULT_DATA_NAME;
 
   // read in and process non-default options
-  int index;
-  int c;
-  opterr = 0;
   /* -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads */
-  while((c = getopt(argc, argv, "cofit")) != -1)
+  int c = 0;
+  while(1)
+  {
+    static struct option long_options[] =
+    {
+      {"coupling",      required_argument, 0, 'c'},
+      {"output-dir",    required_argument, 0, 'o'},
+      {"output-file",   required_argument, 0, 'f'},
+      {"initial-file",  required_argument, 0, 'i'},
+      {"num-threads",   required_argument, 0, 't'},
+      {"num-threads",   no_argument,       0, 'h'}
+    };
+    
+    int option_index = 0;
+    c = getopt_long(argc, argv, "c:o:f:i:t:h", long_options, &option_index);
+    if(c == -1) // stop if done reading arguments
+      break;
+
     switch(c)
     {
       case 'c':
-        setXI(atof(optarg));
+        // setXI(atof(optarg));
         break;
       case 'o':
         filedata.data_dir = optarg;
@@ -39,24 +53,22 @@ int main(int argc, char *argv[])
       case 't':
         threads = atof(optarg);
         break;
+      case 'h':
       case '?':
-        if (optopt == 'c')
-          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-        else if(isprint(optopt))
-          fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-        else
-          fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
-      default:
         fprintf(stderr, "usage: %s -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads\n", argv[0]);
+      default:
         abort();
     }
+  }
 
-  /* ensure data_dir ends with '/' */
+  /* ensure data_dir ends with '/', unless empty string is specified. */
   size_t len_dir_name = strlen(filedata.data_dir);
-  if(filedata.data_dir[len_dir_name - 1] != '/')
+  if(filedata.data_dir[len_dir_name - 1] != '/' && len_dir_name != 0)
   {
-    filedata.data_dir = (char*) malloc((len_dir_name + 2) * sizeof(char));
-    strcpy(filedata.data_dir, argv[2]);
+    char *data_dir;
+    data_dir = (char*) malloc((len_dir_name + 2) * sizeof(char));
+    strcpy(data_dir, filedata.data_dir);
+    filedata.data_dir = data_dir;
     filedata.data_dir[len_dir_name] = '/';
     filedata.data_dir[len_dir_name + 1] = '\0';
   }

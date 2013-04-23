@@ -11,8 +11,7 @@
 #include <time.h>
 #include <omp.h>
 #include <fftw3.h>
-#include <ctype.h>
-#include <unistd.h> /* getopt */
+#include <getopt.h>
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
@@ -20,9 +19,9 @@
 #define LAMBDA      0.01    /* potential height */
 #define ETA         1.0     /* potential min position */
 #define EPSILON     0.025   /* potential asymmetry */
-#define R0          ( 1/EPSILON/ETA/sqrt(LAMBDA) )
+#define R0          (1 / EPSILON / ETA / sqrt(LAMBDA))
 
-#define W_EOS       0.333   /* EOS parameter */
+#define W_EOS       (1.0 / 3.0)   /* EOS parameter */
 #define W_EOSm1     (W_EOS - 1.0)
 #define W_EOSp1     (W_EOS + 1.0)
 
