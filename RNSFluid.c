@@ -6,16 +6,16 @@ int main(int argc, char **argv)
 {
   /* iterators here first. */
   int i, j, k, n, u, s;
-  int read_initial_step = 0;
-  int threads = 2;
 
-  /* information about files */
+  /* information about files, default options */
   IOData filedata;
   filedata.fwrites = 0;
   filedata.data_dir = DEFAULT_DATA_DIR;
   filedata.data_name = DEFAULT_DATA_NAME;
+  int read_initial_step = 0;
+  int threads = 2;
 
-  // read in and process non-default options
+  /* read in and process non-default options */
   /* -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads */
   int c = 0;
   while(1)
@@ -72,9 +72,9 @@ int main(int argc, char **argv)
     filedata.data_dir[len_dir_name] = '/';
     filedata.data_dir[len_dir_name + 1] = '\0';
   }
-
   /* create data_dir */
-  mkdir(filedata.data_dir, 0755);
+  if(len_dir_name != 0)
+    mkdir(filedata.data_dir, 0755);
 
   /* Preallocated storage space for calculated quantities */
   PointData paq;
@@ -90,8 +90,8 @@ int main(int argc, char **argv)
     rks[n] = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
   }
 
-  /* Gravitational perturbation storage */
-  // let's just evolve 2 degrees of freedom for now
+/* Gravitational perturbation storage */
+// let's just evolve 2 degrees of freedom for now
 //  simType *hij, *lij, *STTij;
 //  hij = (simType *) malloc(GRID_STORAGE * 2 * sizeof(simType));
 //  lij = (simType *) malloc(GRID_STORAGE * 2 * sizeof(simType));
@@ -156,6 +156,10 @@ int main(int argc, char **argv)
           // scalar field
           fields[INDEX(i,j,k,4)] = 0.999057*tanh(sqrt(LAMBDA)*ETA/2*(
                 sqrt(
+                  // Bubble is slightly offset from the grid center here if
+                  // there are an even number of grid points - it will be lined
+                  // up with a pixel.  But this is ok, even desirable if we
+                  // want to look at a slice through the middle of the bubble.
                   pow( (i*1.0-1.0*POINTS/2.0)*dx , 2)
                   + pow( (j*1.0-1.0*POINTS/2.0)*dx , 2)
                   + pow( (k*1.0-1.0*POINTS/2.0)*dx , 2)
@@ -191,19 +195,24 @@ int main(int argc, char **argv)
               fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
                 = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
 
-      printf("\rWriting step %i of %i ...", s, MAX_STEPS);
-      fflush(stdout);
+      //printf("\rWriting step %i of %i ...", s, MAX_STEPS);
+      //fflush(stdout);
       filedata.datasize = POINTS_TO_SAMPLE;
       dumpstate(fieldsnext, filedata);
       filedata.fwrites++;
     } // end write step
 
+    if(DUMP_STRIP)
+    {
+      dumpstrip(fields, filedata);
+    }
+
     // write full dump and Hartley Transform data if appropriate
     if(s % T_DUMPINT == 0)
     {
       /* fieldsnext isn't being used, so we can pass it in as storage */
-      printf("\nDumping HT for step %i of %i ...\n", s, MAX_STEPS);
-      fflush(stdout);
+      //printf("\nDumping HT for step %i of %i ...\n", s, MAX_STEPS);
+      //fflush(stdout);
       hartleydump(fields, fieldsnext, filedata);
     }
 

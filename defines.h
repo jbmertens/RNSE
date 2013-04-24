@@ -42,17 +42,20 @@
 #define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid */
 
 /* simulation sampling information */
-#define MAX_STEPS           1             /* Maximum # of steps to run */
-#define STEPS_TO_SAMPLE     1             /* # of steps to record, undersampled */
+#define MAX_STEPS           2000          /* Maximum # of steps to run */
+#define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to
                                                sample */
 
-#define STOP_CELL           10            /* Check for negative field value (eg, bubble wall)
-                                                this many voxels away from the boundary.
-                                                If the field value in this cell becomes negative,
-                                                the simulation should stop running.
-                                                Use negative value for no stop. */
+/* special features */
+#define STOP_CELL           10  /* Check for negative field value (eg, bubble wall)
+                                   this many voxels away from the boundary.
+                                   If the field value in this cell becomes negative,
+                                   the simulation should stop running.
+                                   Use negative value for no stop. */
+#define DUMP_STRIP 1            /* bool - full dump of a strip along the center of
+                                   the simulation at each step? */
 
 /* some defaults. */
 #define DEFAULT_DATA_DIR      "data"

@@ -21,12 +21,15 @@ void writeinfo(IOData filedata)
   }
   fprintf(datafile, "# Writing simulation.\n");
   fprintf(datafile, "# Points Sampled:\n%d\n", POINTS_TO_SAMPLE);
-  fprintf(datafile, "# Steps recorded (possibly incorrect if (steps/recorded) isn't an integer):\n%d\n", STEPS_TO_SAMPLE);
+  fprintf(datafile, "# Steps recorded (requires (steps/recorded) to be an integer):\n%d\n",
+    STEPS_TO_SAMPLE);
   fprintf(datafile, "# dx/dt (timestep):\n%f\n", dx/dt);
   fprintf(datafile, "# Equation of state parameter w:\n%f\n", W_EOS);
-  fprintf(datafile, "# Physical lattice dimensions:\n%f %f %f\n",
+  fprintf(datafile, "# Physical lattice dimensions:\n%f\t%f\t%f\n",
     SIZE, SIZE, SIZE);
   fprintf(datafile, "# Maximum number of steps run:\n%d\n", MAX_STEPS);
+  fprintf(datafile, "# Initial bubble radius:\n%f\t%f\n",
+    R0 /* physical size */, R0/SIZE /* size in pixels */);
 
   fclose(datafile);
   free(infofile);
@@ -80,6 +83,37 @@ void dumpstate(simType *fields, IOData filedata)
 }
 
 
+/* 
+ * Dump a strip of data along an entire axis - output just field data for now.
+ */
+void dumpstrip(simType *fields, IOData filedata)
+{
+  char *infofile;
+  infofile = (char *) malloc(200 * sizeof(char));
+  FILE *datafile;
+  strcpy(infofile, filedata.data_dir);
+  strcat(infofile, filedata.data_name);
+  strcat(infofile, ".strip.dat");
+  datafile = fopen(infofile, "a+");
+  if( datafile == NULL )
+  {
+    printf("Error opening file: %s\n", infofile );
+  }
+
+  int i;
+  for(i=0; i<POINTS; i++)
+  {
+    fprintf(datafile, "%f\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
+  }
+  fprintf(datafile, "\n");
+
+  fclose(datafile);
+  free(infofile);
+
+  return;
+}
+
+
 // need to write this function.
 void readstate(simType *fields, IOData filedata)
 {
@@ -108,4 +142,31 @@ void readstate(simType *fields, IOData filedata)
   free(filename);
 
   return;
+}
+
+
+/* 
+ * Explicitly write what physical time things occurred at - allow variable timestep.
+ */
+void write_timestep(double deltat, int stepnum, IOData filedata)
+{
+  char *infofile;
+  infofile = (char *) malloc(200 * sizeof(char));
+  FILE *datafile;
+
+  /* write simulation parameters to file */
+  strcpy(infofile, filedata.data_dir);
+  strcat(infofile, filedata.data_name);
+  strcat(infofile, ".timeinfo");
+  datafile = fopen(infofile, "a+");
+  if( datafile == NULL )
+  {
+    printf("Error opening file: %s\n", infofile );
+  }
+
+  /* write data here! */
+  fprintf(datafile, "%d\t%10.10f\n", stepnum, deltat);
+
+  fclose(datafile);
+  free(infofile);
 }
