@@ -224,14 +224,15 @@ int main(int argc, char **argv)
         for(k=0; k<POINTS; k++)
         {
           /* Work through normal Euler method. */
-          evolve(fields, fieldsnext, 1.0, &paq, i, j, k);
+          // evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
           // gw_evolve(hij, lij, STTij, &paq, i, j, k);
 
           /* Work through 2nd-order RK method. */
           // midpoint calculation first
-          //   evolve(fields, rks[0], 0.5, &paq, i, j, k);
+            evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
           // final state calculation next
-          //   evolve(rks[0], fieldsnext, 1.0, &paq, i, j, k);
+            evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
+
         }
       }
     }
@@ -431,10 +432,10 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
 /*
  * Evolution step of simulation - compute next step.
  */
-void evolve(simType *initial, simType *final, simType coeff, PointData *paq,
+void evolve(simType *initial, simType *final, simType *intermediate, simType coeff, PointData *paq,
   int i, int j, int k)
 {
-  calculatequantities(initial, paq, i, j, k);
+  calculatequantities(intermediate, paq, i, j, k);
 
   // energy density
    final[INDEX(i,j,k,0)] = paq->fields[0] + coeff*dt*energy_evfn(paq);
