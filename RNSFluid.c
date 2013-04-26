@@ -438,13 +438,13 @@ void evolve(simType *initial, simType *final, simType *intermediate, simType coe
   calculatequantities(intermediate, paq, i, j, k);
 
   // energy density
-   final[INDEX(i,j,k,0)] = paq->fields[0] + coeff*dt*energy_evfn(paq);
+   final[INDEX(i,j,k,0)] = initial[INDEX(i,j,k,0)] + coeff*dt*energy_evfn(paq);
   // fluid
-   final[INDEX(i,j,k,1)] = paq->fields[1] + coeff*dt*fluid_evfn(paq, 1);
-   final[INDEX(i,j,k,2)] = paq->fields[2] + coeff*dt*fluid_evfn(paq, 2);
-   final[INDEX(i,j,k,3)] = paq->fields[3] + coeff*dt*fluid_evfn(paq, 3);
+   final[INDEX(i,j,k,1)] = initial[INDEX(i,j,k,1)] + coeff*dt*fluid_evfn(paq, 1);
+   final[INDEX(i,j,k,2)] = initial[INDEX(i,j,k,2)] + coeff*dt*fluid_evfn(paq, 2);
+   final[INDEX(i,j,k,3)] = initial[INDEX(i,j,k,3)] + coeff*dt*fluid_evfn(paq, 3);
   // field
-   final[INDEX(i,j,k,4)] = paq->fields[4] + coeff*dt*field_evfn(paq);
+   final[INDEX(i,j,k,4)] = initial[INDEX(i,j,k,4)] + coeff*dt*field_evfn(paq);
   // field derivative
-   final[INDEX(i,j,k,5)] = paq->fields[5] + coeff*dt*ddtfield_evfn(paq);
+   final[INDEX(i,j,k,5)] = initial[INDEX(i,j,k,5)] + coeff*dt*ddtfield_evfn(paq);
 }

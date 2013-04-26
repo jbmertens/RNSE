@@ -36,7 +36,7 @@
 #define dt      (dx/20.0)
 
 /* storage parameters */
-#define RK_STEPS 0                            /* Usually RK Method Order - 1        */
+#define RK_STEPS 1                            /* Usually RK Method Order - 1        */
 #define RANK 4                                /* dimension of fields array          */
 #define GRID_STORAGE (POINTS*POINTS*POINTS)   /* space requirement for just grid    */
 #define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid */
