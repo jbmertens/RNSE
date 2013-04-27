@@ -224,15 +224,33 @@ int main(int argc, char **argv)
         for(k=0; k<POINTS; k++)
         {
           /* Work through normal Euler method. */
-          // evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
+          evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
           // gw_evolve(hij, lij, STTij, &paq, i, j, k);
 
           /* Work through 2nd-order RK method. */
           // midpoint calculation first
-            evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
+          //  evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
           // final state calculation next
-            evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
+          //  evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
 
+          /* Standard 4th-order RK method. Only requires 2 extra RK grids. */
+          // calculate intermediate steps
+            // for(u=0; u<DOF; u++)
+            //   fieldsnext[INDEX(i,j,k,u)] = fields[INDEX(i,j,k,u)];
+            // evolve(fields, rks[0], fields, 1.0, &paq, i, j, k);
+            // for(u=0; u<DOF; u++)
+            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[0][INDEX(i,j,k,u)]/6.0;
+            // evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
+            // for(u=0; u<DOF; u++)
+            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/3.0;
+            // // done working with rks[0]... reuse here:
+            // evolve(fields, rks[0], rks[1], 0.5, &paq, i, j, k);
+            // for(u=0; u<DOF; u++)
+            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[0][INDEX(i,j,k,u)]/3.0;
+            // // reuse rks[1].
+            // evolve(fields, rks[1], rks[0], 1.0, &paq, i, j, k);
+            // for(u=0; u<DOF; u++)
+            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/6.0;
         }
       }
     }
