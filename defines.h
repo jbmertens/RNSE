@@ -36,13 +36,13 @@
 #define dt      (dx/20.0)
 
 /* storage parameters */
-#define RK_STEPS 1                            /* Usually RK Method Order - 1        */
+#define RK_STEPS 2                            /* Usually RK Method Order - 1        */
 #define RANK 4                                /* dimension of fields array          */
 #define GRID_STORAGE (POINTS*POINTS*POINTS)   /* space requirement for just grid    */
 #define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid */
 
 /* simulation sampling information */
-#define MAX_STEPS           200           /* Maximum # of steps to run */
+#define MAX_STEPS           2000          /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to

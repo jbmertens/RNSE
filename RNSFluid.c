@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
 
 /* 2nd-order RK method. */
-/****/
+/****
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
@@ -252,23 +252,52 @@ int main(int argc, char **argv)
 
 
 /* Standard 4th-order RK method. Only requires 2 extra RK grids. */
-          // calculate intermediate steps
-            // for(u=0; u<DOF; u++)
-            //   fieldsnext[INDEX(i,j,k,u)] = fields[INDEX(i,j,k,u)];
-            // evolve(fields, rks[0], fields, 1.0, &paq, i, j, k);
-            // for(u=0; u<DOF; u++)
-            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[0][INDEX(i,j,k,u)]/6.0;
-            // evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
-            // for(u=0; u<DOF; u++)
-            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/3.0;
-            // // done working with rks[0]... reuse here:
-            // evolve(fields, rks[0], rks[1], 0.5, &paq, i, j, k);
-            // for(u=0; u<DOF; u++)
-            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[0][INDEX(i,j,k,u)]/3.0;
-            // // reuse rks[1].
-            // evolve(fields, rks[1], rks[0], 1.0, &paq, i, j, k);
-            // for(u=0; u<DOF; u++)
-            //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/6.0;
+/****/
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
+          evolve(fields, rks[0], fields, 1.0, &paq, i, j, k);
+        }
+    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
+          evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
+          for(u=0; u<DOF; u++)
+            fieldsnext[INDEX(i,j,k,u)] = fields[INDEX(i,j,k,u)]*(1.0-dt) + dt*rks[0][INDEX(i,j,k,u)]/6.0;
+        }
+    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
+          // done working with rks[0]... reuse here:
+          evolve(fields, rks[0], rks[1], 0.5, &paq, i, j, k);
+          for(u=0; u<DOF; u++)
+            fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/3.0;
+        }
+    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
+          // reuse rks[1].
+          evolve(fields, rks[1], rks[0], 1.0, &paq, i, j, k);
+          for(u=0; u<DOF; u++)
+            fieldsnext[INDEX(i,j,k,u)] += dt*rks[0][INDEX(i,j,k,u)]/3.0;
+        }
+    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+          for(u=0; u<DOF; u++) {
+            fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/6.0;
+          }
+/****/
+
 
     // store new field data
     for(i=0; i<POINTS; i++)
