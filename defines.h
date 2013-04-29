@@ -30,7 +30,7 @@
 
 /* resolution parameters */
 #define SIZE    (6*R0)                         /* physical size in space */
-#define POINTS  ((long long) 512)              /* number of points on
+#define POINTS  ((long long) 256)              /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/20.0)
@@ -42,7 +42,7 @@
 #define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid */
 
 /* simulation sampling information */
-#define MAX_STEPS           2000          /* Maximum # of steps to run */
+#define MAX_STEPS           200           /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to

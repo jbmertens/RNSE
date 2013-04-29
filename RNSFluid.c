@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     switch(c)
     {
       case 'c':
-        // setXI(atof(optarg));
+        setXI(atof(optarg));
         break;
       case 'o':
         filedata.data_dir = optarg;
@@ -216,24 +216,42 @@ int main(int argc, char **argv)
       hartleydump(fields, fieldsnext, filedata);
     }
 
+
+/* Work through normal Euler method. */
+/****
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
-    {
       for(j=0; j<POINTS; j++)
-      {
         for(k=0; k<POINTS; k++)
         {
-          /* Work through normal Euler method. */
           evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
           // gw_evolve(hij, lij, STTij, &paq, i, j, k);
+        }
+/****/
 
-          /* Work through 2nd-order RK method. */
+
+/* 2nd-order RK method. */
+/****/
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
           // midpoint calculation first
-          //  evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
+          evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
+        }
+    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<POINTS; k++)
+        {
           // final state calculation next
-          //  evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
+          evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
+        }
+/****/
 
-          /* Standard 4th-order RK method. Only requires 2 extra RK grids. */
+
+/* Standard 4th-order RK method. Only requires 2 extra RK grids. */
           // calculate intermediate steps
             // for(u=0; u<DOF; u++)
             //   fieldsnext[INDEX(i,j,k,u)] = fields[INDEX(i,j,k,u)];
@@ -251,9 +269,6 @@ int main(int argc, char **argv)
             // evolve(fields, rks[1], rks[0], 1.0, &paq, i, j, k);
             // for(u=0; u<DOF; u++)
             //   fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/6.0;
-        }
-      }
-    }
 
     // store new field data
     for(i=0; i<POINTS; i++)
@@ -423,7 +438,7 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
   paq->relw = (1.0 - W_EOSm1 * paq->u2);
 
   // [GRADIENTS]
-  for(u=0; u<DOF; u++) {
+  for(u=0; u<5; u++) {
     n = 0;
      for(n=1; n<=3; n++)
        paq->gradients[n][u] = derivative(fields, n, u, i, j, k);
