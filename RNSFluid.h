@@ -11,6 +11,8 @@ static inline simType ddtfield_evfn(PointData *paq);
 void calculatequantities(simType *fields, PointData *paq, int i, int j, int k);
 void evolve(simType *initial, simType *final, simType *intermediate, simType coeff, PointData *paq,
   int i, int j, int k);
+void evolvediff(simType *input, simType *output, PointData *paq,
+  int i, int j, int k);
 
 /* Deal with fluid coupling. */
 static inline simType getXI();

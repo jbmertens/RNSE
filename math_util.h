@@ -85,19 +85,25 @@ static inline simType derivative2(simType *data, int ddim /* direction of deriva
   switch(ddim)
   {
     case 1:
-      return (data[INDEX((i+1)%POINTS,j,k,dim)]
+      return (
+        data[INDEX((i+1)%POINTS,j,k,dim)]
         + data[INDEX((i+POINTS-1)%POINTS,j,k,dim)]
-        - 2*data[INDEX(i,j,k,dim)])/dx/dx;
+        - 2*data[INDEX(i,j,k,dim)]
+        )/dx/dx;
 
     case 2:
-      return (data[INDEX(i,(j+1)%POINTS,k,dim)]
+      return (
+        data[INDEX(i,(j+1)%POINTS,k,dim)]
         + data[INDEX(i,(j+POINTS-1)%POINTS,k,dim)]
-        - 2*data[INDEX(i,j,k,dim)])/dx/dx;
+        - 2*data[INDEX(i,j,k,dim)]
+        )/dx/dx;
 
     case 3:
-      return (data[INDEX(i,j,(k+1)%POINTS,dim)]
+      return (
+        data[INDEX(i,j,(k+1)%POINTS,dim)]
         + data[INDEX(i,j,(k+POINTS-1)%POINTS,dim)]
-        - 2*data[INDEX(i,j,k,dim)])/dx/dx;
+        - 2*data[INDEX(i,j,k,dim)]
+        )/dx/dx;
   }
 
   /* XXX */

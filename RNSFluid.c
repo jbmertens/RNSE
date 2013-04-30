@@ -253,12 +253,12 @@ int main(int argc, char **argv)
 
 /* Standard 4th-order RK method. Only requires 2 extra RK grids. */
 /****/
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
+    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
         {
-          evolve(fields, rks[0], fields, 1.0, &paq, i, j, k);
+          evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
         }
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
@@ -267,35 +267,31 @@ int main(int argc, char **argv)
         {
           evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
           for(u=0; u<DOF; u++)
-            fieldsnext[INDEX(i,j,k,u)] = fields[INDEX(i,j,k,u)]*(1.0-dt) + dt*rks[0][INDEX(i,j,k,u)]/6.0;
+            fieldsnext[INDEX(i,j,k,u)] = 2*rks[1][INDEX(i,j,k,u)] + rks[0][INDEX(i,j,k,u)];
         }
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
         {
-          // done working with rks[0]... reuse here:
-          evolve(fields, rks[0], rks[1], 0.5, &paq, i, j, k);
+          // reuse rks[0] - really rks[2]
+          evolve(fields, rks[0], rks[1], 1.0, &paq, i, j, k);
           for(u=0; u<DOF; u++)
-            fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/3.0;
+            fieldsnext[INDEX(i,j,k,u)] += rks[0][INDEX(i,j,k,u)];
         }
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
         {
-          // reuse rks[1].
-          evolve(fields, rks[1], rks[0], 1.0, &paq, i, j, k);
+          // reuse rks[1] now - really rks[3]
+          evolvediff(rks[0], rks[1], &paq, i, j, k);
           for(u=0; u<DOF; u++)
-            fieldsnext[INDEX(i,j,k,u)] += dt*rks[0][INDEX(i,j,k,u)]/3.0;
-        }
-    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-          for(u=0; u<DOF; u++) {
-            fieldsnext[INDEX(i,j,k,u)] += dt*rks[1][INDEX(i,j,k,u)]/6.0;
+          {
+            fieldsnext[INDEX(i,j,k,u)] += dt/2.0*rks[1][INDEX(i,j,k,u)] - fields[INDEX(i,j,k,u)];
+            fieldsnext[INDEX(i,j,k,u)] /= 3.0;
           }
+        }
 /****/
 
 
@@ -509,4 +505,25 @@ void evolve(simType *initial, simType *final, simType *intermediate, simType coe
    final[INDEX(i,j,k,4)] = initial[INDEX(i,j,k,4)] + coeff*dt*field_evfn(paq);
   // field derivative
    final[INDEX(i,j,k,5)] = initial[INDEX(i,j,k,5)] + coeff*dt*ddtfield_evfn(paq);
+}
+
+
+/*
+ * Evolution step of simulation - compute only function from initial value problem.
+ */
+void evolvediff(simType *input, simType *output, PointData *paq,
+  int i, int j, int k)
+{
+  calculatequantities(input, paq, i, j, k);
+
+  // energy density
+   output[INDEX(i,j,k,0)] = energy_evfn(paq);
+  // fluid
+   output[INDEX(i,j,k,1)] = fluid_evfn(paq, 1);
+   output[INDEX(i,j,k,2)] = fluid_evfn(paq, 2);
+   output[INDEX(i,j,k,3)] = fluid_evfn(paq, 3);
+  // field
+   output[INDEX(i,j,k,4)] = field_evfn(paq);
+  // field derivative
+   output[INDEX(i,j,k,5)] = ddtfield_evfn(paq);
 }
