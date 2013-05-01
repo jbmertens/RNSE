@@ -154,18 +154,32 @@ int main(int argc, char **argv)
           fields[INDEX(i,j,k,3)] = 0.0;
 
           // scalar field
-          fields[INDEX(i,j,k,4)] = 0.999057*tanh(sqrt(LAMBDA)*ETA/2*(
+          /**
+          fields[INDEX(i,j,k,4)] = tanh(sqrt(LAMBDA)*ETA/2*(
                 sqrt(
-                  // Bubble is slightly offset from the grid center here if
-                  // there are an even number of grid points - it will be lined
+                  // Bubble is slightly offset from the grid center here - if
+                  // there are an even number of grid points. it will be lined
                   // up with a pixel.  But this is ok, even desirable if we
                   // want to look at a slice through the middle of the bubble.
-                  pow( (i*1.0-1.0*POINTS/2.0)*dx , 2)
-                  + pow( (j*1.0-1.0*POINTS/2.0)*dx , 2)
-                  + pow( (k*1.0-1.0*POINTS/2.0)*dx , 2)
+                  pow( (i*1.0-POINTS/2.0)*dx , 2)
+                  + pow( (j*1.0-POINTS/2.0)*dx , 2)
+                  + pow( (k*1.0-POINTS/2.0)*dx , 2)
+                ) - R0)
+              );
+          /**/
+          fields[INDEX(i,j,k,4)] = 0.999057*tanh(sqrt(LAMBDA)*ETA/2*(
+                sqrt(
+                  // Bubble is slightly offset from the grid center here - if
+                  // there are an even number of grid points. it will be lined
+                  // up with a pixel.  But this is ok, even desirable if we
+                  // want to look at a slice through the middle of the bubble.
+                  pow( (i*1.0-POINTS/2.0)*dx , 2)
+                  + pow( (j*1.0-POINTS/2.0)*dx , 2)
+                  + pow( (k*1.0-POINTS/2.0)*dx , 2)
                 ) - R0
               )
-            ) - 0.025063 ; // spherically symmetric soliton/"bubble" solution
+            ) - 0.025063; // spherically symmetric soliton/"bubble" solution
+          /**/
 
           // time-derivative of scalar field
           fields[INDEX(i,j,k,5)] = 0;
@@ -509,7 +523,7 @@ void evolve(simType *initial, simType *final, simType *intermediate, simType coe
 
 
 /*
- * Evolution step of simulation - compute only function from initial value problem.
+ * Evolution step of simulation - compute/store only evolution functions.
  */
 void evolvediff(simType *input, simType *output, PointData *paq,
   int i, int j, int k)
