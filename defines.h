@@ -72,9 +72,11 @@ typedef double simType;
 /* data structure for storing calculated quantities at a point */
 typedef struct {
   simType fields[6];
+
   simType gradients[4][DOF];
   simType derivs2[4];
-  
+  simType lap;
+
   /* calculated quantities */
   simType ut;
   simType ut2;

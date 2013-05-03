@@ -16,6 +16,7 @@ static inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4]);
 static inline simType sp_tr(simType t1[4][DOF]);
 static inline simType derivative(simType *data, int ddim, int dim, int i, int j, int k);
 static inline simType derivative2(simType *data, int ddim, int dim, int i, int j, int k);
+static inline simType lapl(simType *data, int dof, int i, int j, int k);
 
 /* potential function */
 static inline simType dV(simType phi);
@@ -109,6 +110,32 @@ static inline simType derivative2(simType *data, int ddim /* direction of deriva
   /* XXX */
   return 0;
 }
+
+/* 
+ * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
+ * Bit higher order scheme here than just taking 2nd derivatives.
+ */
+static inline simType lapl(simType *data, int dof, int i, int j, int k)
+{
+  return (
+    (
+      data[INDEX((i+1)%POINTS,(j+1)%POINTS,k,dof)] + data[INDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
+      + data[INDEX((i+1)%POINTS,j,(k+1)%POINTS,dof)] + data[INDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
+      + data[INDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,dof)] + data[INDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
+      + data[INDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,dof)] + data[INDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
+      + data[INDEX(i,(j+1)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,dof)]
+      + data[INDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
+    )
+    + 2.0*(
+      data[INDEX((i+1)%POINTS,j,k,dof)] + data[INDEX(i,(j+1)%POINTS,k,dof)] + data[INDEX(i,j,(k+1)%POINTS,dof)]
+      + data[INDEX((i-1+POINTS)%POINTS,j,k,dof)] + data[INDEX(i,(j-1+POINTS)%POINTS,k,dof)] + data[INDEX(i,j,(k-1+POINTS)%POINTS,dof)]
+    )
+    - 24.0*(
+      data[INDEX(i,j,k,dof)]
+    )
+  )/6.0/dx/dx;
+}
+
 
 
 /*

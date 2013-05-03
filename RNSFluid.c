@@ -448,8 +448,7 @@ static inline simType field_evfn(PointData *paq)
 static inline simType ddtfield_evfn(PointData *paq)
 {
   return (
-    paq->derivs2[1] + paq->derivs2[2] + paq->derivs2[3]
-    + getXI() * (
+    paq->lap + getXI() * (
       paq->ut * paq->fields[5]
       + sumvt(paq->fields, paq->gradients, 1, 4)
     ) - dV(paq->fields[4])
@@ -483,9 +482,10 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
        paq->gradients[n][u] = derivative(fields, n, u, i, j, k);
   }
 
-  paq->derivs2[1] = derivative2(fields, 1, 4, i, j, k);
-  paq->derivs2[2] = derivative2(fields, 2, 4, i, j, k);
-  paq->derivs2[3] = derivative2(fields, 3, 4, i, j, k);
+  // paq->derivs2[1] = derivative2(fields, 1, 4, i, j, k);
+  // paq->derivs2[2] = derivative2(fields, 2, 4, i, j, k);
+  // paq->derivs2[3] = derivative2(fields, 3, 4, i, j, k);
+  paq->lap = lapl(fields, 4, i, j, k);
 
   // compute source term information [SOURCE]
   // little j is source, big J is some wonko function of source
