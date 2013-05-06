@@ -63,6 +63,11 @@
 
 /* array element access macro */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (l))
+/* Common for loop structure */
+#define LOOP3(i,j,k) for(i=0; i<POINTS; i++) \
+                     for(j=0; j<POINTS; j++) \
+                     for(k=0; k<POINTS; k++)
+#define LOOP4(i,j,k,u) LOOP3(i,j,k) for(u=0; u<DOF; u++)
 
 /* TYPEDEFS */
 /* Precision/format we'd like to use for this simulation: */

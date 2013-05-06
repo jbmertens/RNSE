@@ -202,12 +202,9 @@ int main(int argc, char **argv)
     if(s % T_SAMPLEINT == 0)
     {
       // fieldsnext is not being used yet, so we can use it to store an undersampled array of data:
-      for(i=0; i<POINTS_TO_SAMPLE; i++)
-        for(j=0; j<POINTS_TO_SAMPLE; j++)
-          for(k=0; k<POINTS_TO_SAMPLE; k++)
-            for(u=0; u<DOF; u++)
-              fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
-                = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
+      LOOP4(i,j,k,u)
+        fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
+          = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
 
       //printf("\rWriting step %i of %i ...", s, MAX_STEPS);
       //fflush(stdout);
@@ -234,101 +231,90 @@ int main(int argc, char **argv)
 /* Work through normal Euler method. */
 /****
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
-          // gw_evolve(hij, lij, STTij, &paq, i, j, k);
-        }
+    LOOP3(i,j,k)
+    {
+      evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
+      // gw_evolve(hij, lij, STTij, &paq, i, j, k);
+    }
 /****/
 
 
 /* 2nd-order RK method. */
 /****
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          // midpoint calculation first
-          evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
-        }
+    LOOP3(i,j,k)
+    {
+      // midpoint calculation first
+      evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
+    }
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          // final state calculation next
-          evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
-        }
+    LOOP3(i,j,k)
+    {
+      // final state calculation next
+      evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
+    }
 /****/
 
 
 /* Standard 4th-order RK method. Only requires 2 extra RK grids. */
 /****/
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
-        }
+    LOOP3(i,j,k)
+    {
+      evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
+    }
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
-          for(u=0; u<DOF; u++)
-            fieldsnext[INDEX(i,j,k,u)] = 2*rks[1][INDEX(i,j,k,u)] + rks[0][INDEX(i,j,k,u)];
-        }
+    LOOP3(i,j,k)
+    {
+      evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
+      for(u=0; u<DOF; u++)
+        fieldsnext[INDEX(i,j,k,u)] = 2*rks[1][INDEX(i,j,k,u)] + rks[0][INDEX(i,j,k,u)];
+    }
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          // reuse rks[0] - really rks[2]
-          evolve(fields, rks[0], rks[1], 1.0, &paq, i, j, k);
-          for(u=0; u<DOF; u++)
-            fieldsnext[INDEX(i,j,k,u)] += rks[0][INDEX(i,j,k,u)];
-        }
+    LOOP3(i,j,k)
+    {
+      // reuse rks[0] - really rks[2]
+      evolve(fields, rks[0], rks[1], 1.0, &paq, i, j, k);
+      for(u=0; u<DOF; u++)
+        fieldsnext[INDEX(i,j,k,u)] += rks[0][INDEX(i,j,k,u)];
+    }
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-        {
-          // reuse rks[1] now - really rks[3]
-          evolvediff(rks[0], rks[1], &paq, i, j, k);
-          for(u=0; u<DOF; u++)
-          {
-            fieldsnext[INDEX(i,j,k,u)] += dt/2.0*rks[1][INDEX(i,j,k,u)] - fields[INDEX(i,j,k,u)];
-            fieldsnext[INDEX(i,j,k,u)] /= 3.0;
-          }
-        }
+    LOOP3(i,j,k)
+    {
+      // reuse rks[1] now - really rks[3]
+      evolvediff(rks[0], rks[1], &paq, i, j, k);
+      for(u=0; u<DOF; u++)
+      {
+        fieldsnext[INDEX(i,j,k,u)] += dt/2.0*rks[1][INDEX(i,j,k,u)] - fields[INDEX(i,j,k,u)];
+        fieldsnext[INDEX(i,j,k,u)] /= 3.0;
+      }
+    }
 /****/
 
+    if(s%20 == 0)
+    {
+      // perform convolution - smooth out any wrinkles forming
+      convolve(fieldsnext, fields, 0.252);
+    }
+    
 
     // store new field data
-    for(i=0; i<POINTS; i++)
-      for(j=0; j<POINTS; j++)
-        for(k=0; k<POINTS; k++)
-          for(u=0; u<DOF; u++)
-          {
+    LOOP4(i,j,k,u)
+    {
 #ifdef DEBUG
-            /* check for NaN */
-            if(isnan(fieldsnext[INDEX(i,j,k,u)]))
-            {
-              /* do something! */
-            }
-            else
-            {
-              fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
-            }
+      /* check for NaN */
+      if(isnan(fieldsnext[INDEX(i,j,k,u)]))
+      {
+        /* do something! */
+      }
+      else
+      {
+        fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
+      }
 #else
-              fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
+      fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
 #endif
-          }
+    }
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < 0)
     {
