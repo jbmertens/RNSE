@@ -9,6 +9,8 @@ static inline simType Ut(PointData *paq);
 static inline simType Ut2(PointData *paq);
 static inline simType magu2(PointData *paq);
 
+static inline int sgn(simType value);
+
 /* sums, derivatives, such. */
 static inline simType sumvv(simType v1[4], simType v2[4]);
 static inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc, int s);
@@ -206,20 +208,21 @@ static inline void convolve(simType *data, simType *temp, simType coeff)
 {
   int i, j, k, u;
   int x, y, z, n;
+
   LOOP4(i,j,k,u)
   {
     x=0; y=0; z=0;
 
     // check for "W" or "M" patterns to smooth
-    for(n=-2; n<2; n++)
+    for(n=0; n<4; n++)
     {
       // add up greater or less than's, convolved with "w" of signs.  x/y/z = +/-4 for W/M shapes.
-      x += (2*(n%2)-1) * ((data[INDEX((i+n+POINTS)%POINTS,j,k,u)] < data[INDEX((i+n+1+POINTS)%POINTS,j,k,u)])
-          - (data[INDEX((i+n+POINTS)%POINTS,j,k,u)] > data[INDEX((i+n+1+POINTS)%POINTS,j,k,u)]));
-      y += (2*(n%2)-1) * ((data[INDEX(i,(j+n+POINTS)%POINTS,k,u)] > data[INDEX(i,(j+n+1+POINTS)%POINTS,k,u)])
-          - (data[INDEX(i,(j+n+POINTS)%POINTS,k,u)] > data[INDEX(i,(j+n+1+POINTS)%POINTS,k,u)]));
-      z += (2*(n%2)-1) * ((data[INDEX(i,j,(k+n+POINTS)%POINTS,u)] > data[INDEX(i,j,(k+n+1+POINTS)%POINTS,u)])
-          - (data[INDEX(i,j,(k+n+POINTS)%POINTS,u)] > data[INDEX(i,j,(k+n+1+POINTS)%POINTS,u)]));
+      x += (2*(n%2)-1)
+          * sgn(round(1000000*(data[INDEX((i+n-2+POINTS)%POINTS,j,k,u)] - data[INDEX((i+n-1+POINTS)%POINTS,j,k,u)])));
+      y += (2*(n%2)-1)
+          * sgn(round(1000000*(data[INDEX(i,(j+n-2+POINTS)%POINTS,k,u)] - data[INDEX(i,(j+n-1+POINTS)%POINTS,k,u)])));
+      z += (2*(n%2)-1)
+          * sgn(round(1000000*(data[INDEX(i,j,(k+n-2+POINTS)%POINTS,u)] - data[INDEX(i,j,(k+n-1+POINTS)%POINTS,u)])));
     }
 
     temp[INDEX(i,j,k,u)] = data[INDEX(i,j,k,u)];
@@ -252,6 +255,11 @@ static inline void convolve(simType *data, simType *temp, simType coeff)
   {
     data[INDEX(i,j,k,u)] = temp[INDEX(i,j,k,u)];
   }
+}
+
+static inline int sgn(simType value)
+{
+  return (value > 0.0) - (value < 0.0);
 }
 
 #endif

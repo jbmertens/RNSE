@@ -30,7 +30,7 @@
 
 /* resolution parameters */
 #define SIZE    (6*R0)                         /* physical size in space */
-#define POINTS  ((long long) 256)              /* number of points on
+#define POINTS  ((long long) 512)              /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/20.0)
@@ -124,6 +124,9 @@ typedef struct {
   int datasize;
 } IOData;
 
+typedef struct {
+  
+} StorageWedge;
 
 /* Project functionality */
 #include "RNSFluid.h"

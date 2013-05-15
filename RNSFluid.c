@@ -240,7 +240,7 @@ int main(int argc, char **argv)
 
 
 /* 2nd-order RK method. */
-/****
+/****/
     #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
     LOOP3(i,j,k)
     {
@@ -256,8 +256,8 @@ int main(int argc, char **argv)
 /****/
 
 
-/* Standard 4th-order RK method. Only requires 2 extra RK grids. */
-/****/
+/* Standard 4th-order RK method. Requires 2 extra RK grids. */
+/****
     #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
     LOOP3(i,j,k)
     {
@@ -291,11 +291,37 @@ int main(int argc, char **argv)
     }
 /****/
 
-    if(s%20 == 0)
-    {
-      // perform convolution - smooth out any wrinkles forming
-      convolve(fieldsnext, fields, 0.252);
-    }
+/* Memory-efficient RK4 implementation, hopefully at no speed cost.  Requires several "slice" grids, forming a "wedge". */
+/* Will hopefully save a factor of 
+/****/
+    /* Fastest implementation should only require O(L^2) storage space, not O(L^3) (L=POINTS).
+     * Need to implement a tapered grid of points - each step will require all adjacent points in previous step
+     *   -> Last (4th) step only needs to implement a 1xLxL slice, 3rd a 3xLxL, 2nd last a 5xLxL, and 1st a 7xLxL.
+     *   -> Forms sort of a "wedge", tapered structure in memoru.  16xLxL memory locations needed - better than 4xLxLxL.
+     * The first step must be calculated using a 9xLxL swath of the original grid, but once a 1xLxL slice is done,
+     * it can be updated on the initial grid, removing the need for a final grid.
+     * Duplicate storage - two copies of the "wedge" structure will still be needed.  This is (a) so values saved in the 
+     * grid won't back-pollute, and (b) to remove the need for repeated calculations.  Memory-speed tradeoff made here.
+     * So the final amount of memory locations needed is 32xLxL, one for each DOF.
+     */
+
+    // Build initial wedge
+      // for();
+      // use StorageWedge struct?
+    // Move wedge along
+      // Set first order strip
+      // Set second order strip
+      // Set third order strip
+      // Set fourth order strip
+      // Add back into grid
+    // Stop early, and "merge" the wedges back together.
+/****/
+
+    // if(s%50 == 0)
+    // {
+    //   // perform convolution - smooth out any numerical oscillations forming
+    //   convolve(fieldsnext, fields, 0.252);
+    // }
     
 
     // store new field data
