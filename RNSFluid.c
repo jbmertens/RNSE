@@ -194,7 +194,7 @@ int main(int argc, char **argv)
   /* Actual Evolution code */
   for (s=1; s<=MAX_STEPS; s++)
   {
-
+    printf("Working on step %d\n", s);
 /* TODO:
     // write data if necessary
     if(s % T_SAMPLEINT == 0)
@@ -240,31 +240,33 @@ int main(int argc, char **argv)
  * TODO: Parallelize on the j, k loops (area calculations).
  */
 
-    // initial wedge and (centered on i=0)
-      for(i=-1; i<=1; i++) {
+    // initial wedge base (centered on i=0)
+      for(i=POINTS-1; i<=POINTS+1; i++) {
         // populate wedge
         LOOP2(j,k)
           g2wevolve(fields, wedge, &paq, i, j, k);
       }
 
     // build afterimage and tail
-      // first afterimage
+      // store afterimage of first tail point
       LOOP2(j,k)
       {
         w2pevolve(wedge, &paq, 0, j, k);
         for(u=0; u<DOF; u++) {
-          after[INDEX(0,j,k,u)] = wedge[INDEX(4,j,k,u)];
+          after[INDEX(0,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
       }
+
       // roll wedge base forward
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, 2, j, k);
-      // second afterimage
+
+      // second tail point afterimage
       LOOP2(j,k)
       {
         w2pevolve(wedge, &paq, 1, j, k);
         for(u=0; u<DOF; u++) {
-          after[INDEX(1,j,k,u)] = wedge[INDEX(4,j,k,u)];
+          after[INDEX(1,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
       }
 
@@ -275,7 +277,7 @@ int main(int argc, char **argv)
     {
       w2pevolve(wedge, &paq, 2, j, k);
       for(u=0; u<DOF; u++) {
-        tail[INDEX(2%2,j,k,u)] = wedge[INDEX(4,j,k,u)];
+        tail[INDEX(2%2,j,k,u)] = wedge[INDEX(3,j,k,u)];
       }
     }
     LOOP2(j,k)
@@ -284,7 +286,7 @@ int main(int argc, char **argv)
     {
       w2pevolve(wedge, &paq, 3, j, k);
       for(u=0; u<DOF; u++) {
-        tail[INDEX(3%2,j,k,u)] = wedge[INDEX(4,j,k,u)];
+        tail[INDEX(3%2,j,k,u)] = wedge[INDEX(3,j,k,u)];
       }
     }
 
@@ -297,17 +299,18 @@ int main(int argc, char **argv)
     }
 
     // Move along, move along home
-    for(i=6; i<=POINTS; i++) { // need to re-calculate wedge point @ i=0
+    for(i=6; i<=POINTS; i++)
+    {
       // roll base along
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, i, j, k);
 
+      // grid <- tail <- peak <- base
       LOOP2(j,k)
         for(u=0; u<DOF; u++)
         {
-          // grid <- tail <- peak <- base
           fields[INDEX(i-4,j,k,u)] = tail[INDEX((i-4)%2,j,k,u)]; // tail to grid
-          tail[INDEX((i-2)%2,j,k,u)] = wedge[INDEX(4,j,k,u)];  // peak back in tail
+          tail[INDEX((i-2)%2,j,k,u)] = wedge[INDEX(3,j,k,u)];  // peak back in tail
           w2pevolve(wedge, &paq, i-1, j, k);
         }
     }
@@ -319,6 +322,7 @@ int main(int argc, char **argv)
         fields[INDEX(0,j,k,u)] = after[INDEX(0,j,k,u)];
         fields[INDEX(1,j,k,u)] = after[INDEX(1,j,k,u)];
       }
+
 
 /** End wedge method **/
 
@@ -543,13 +547,14 @@ void w2pevolve(simType *wedge, PointData *paq, int i, int j, int k)
 
   // [EVOLVE WEDGE BASE TO PEAK]
   // energy density
-   wedge[INDEX(4,j,k,0)] = wedge[INDEX(i%3,j,k,0)] + dt*energy_evfn(paq);
+   wedge[INDEX(3,j,k,0)] = wedge[INDEX(i%3,j,k,0)] + dt*energy_evfn(paq);
   // fluid
-   wedge[INDEX(4,j,k,1)] = wedge[INDEX(i%3,j,k,1)] + dt*fluid_evfn(paq, 1);
-   wedge[INDEX(4,j,k,2)] = wedge[INDEX(i%3,j,k,2)] + dt*fluid_evfn(paq, 2);
-   wedge[INDEX(4,j,k,3)] = wedge[INDEX(i%3,j,k,3)] + dt*fluid_evfn(paq, 3);
+   wedge[INDEX(3,j,k,1)] = wedge[INDEX(i%3,j,k,1)] + dt*fluid_evfn(paq, 1);
+   wedge[INDEX(3,j,k,2)] = wedge[INDEX(i%3,j,k,2)] + dt*fluid_evfn(paq, 2);
+   wedge[INDEX(3,j,k,3)] = wedge[INDEX(i%3,j,k,3)] + dt*fluid_evfn(paq, 3);
   // field
-   wedge[INDEX(4,j,k,4)] = wedge[INDEX(i%3,j,k,4)] + dt*field_evfn(paq);
+   wedge[INDEX(3,j,k,4)] = wedge[INDEX(i%3,j,k,4)] + dt*field_evfn(paq);
   // field derivative
-   wedge[INDEX(4,j,k,5)] = wedge[INDEX(i%3,j,k,5)] + dt*ddtfield_evfn(paq);
+   wedge[INDEX(3,j,k,5)] = wedge[INDEX(i%3,j,k,5)] + dt*ddtfield_evfn(paq);
+
 }
