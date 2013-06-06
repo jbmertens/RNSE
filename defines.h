@@ -26,7 +26,7 @@
 #define W_EOSp1     (W_EOS + 1.0)
 
 /*1 (ln of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
-#define DOF 6  
+#define DOF ((long long) 6)  
 
 /* resolution parameters */
 #define SIZE    (6*R0)                         /* physical size in space */
@@ -36,13 +36,14 @@
 #define dt      (dx/20.0)
 
 /* storage parameters */
-#define RK_STEPS 2                            /* Usually RK Method Order - 1        */
-#define RANK 4                                /* dimension of fields array          */
-#define GRID_STORAGE (POINTS*POINTS*POINTS)   /* space requirement for just grid    */
-#define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid */
+#define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
+#define RANK 4                                /* dimension of fields array                          */
+#define GRID_STORAGE (POINTS*POINTS*POINTS)   /* space requirement for just grid                    */
+#define STORAGE (GRID_STORAGE*DOF)            /* space requirement for fields/fluid                 */
+#define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           2000          /* Maximum # of steps to run */
+#define MAX_STEPS           5000          /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to
@@ -64,9 +65,9 @@
 /* array element access macro */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (l))
 /* Common for loop structure */
-#define LOOP3(i,j,k) for(i=0; i<POINTS; i++) \
-                     for(j=0; j<POINTS; j++) \
-                     for(k=0; k<POINTS; k++)
+#define LOOP2(j,k) for(j=0; j<POINTS; j++) \
+                   for(k=0; k<POINTS; k++)
+#define LOOP3(i,j,k) for(i=0; i<POINTS; i++) LOOP2(j,k)
 #define LOOP4(i,j,k,u) LOOP3(i,j,k) for(u=0; u<DOF; u++)
 
 /* TYPEDEFS */
@@ -123,10 +124,6 @@ typedef struct {
   int fwrites;
   int datasize;
 } IOData;
-
-typedef struct {
-  
-} StorageWedge;
 
 /* Project functionality */
 #include "RNSFluid.h"

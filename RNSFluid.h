@@ -8,11 +8,9 @@ static inline simType energy_evfn(PointData *paq);
 static inline simType fluid_evfn(PointData *paq, int u);
 static inline simType field_evfn(PointData *paq);
 static inline simType ddtfield_evfn(PointData *paq);
-void calculatequantities(simType *fields, PointData *paq, int i, int j, int k);
-void evolve(simType *initial, simType *final, simType *intermediate, simType coeff, PointData *paq,
-  int i, int j, int k);
-void evolvediff(simType *input, simType *output, PointData *paq,
-  int i, int j, int k);
+
+void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k);
+void w2pevolve(simType *wedge, PointData *paq, int i, int j, int k);
 
 /* Deal with fluid coupling. */
 static inline simType getXI();

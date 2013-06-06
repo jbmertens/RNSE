@@ -16,15 +16,20 @@ static inline simType sumvv(simType v1[4], simType v2[4]);
 static inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc, int s);
 static inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4]);
 static inline simType sp_tr(simType t1[4][DOF]);
+
 static inline simType derivative(simType *data, int ddim, int dim, int i, int j, int k);
-static inline simType derivative2(simType *data, int ddim, int dim, int i, int j, int k);
 static inline simType lapl(simType *data, int dof, int i, int j, int k);
+
+static inline simType wderivative(simType *data, int ddim, int dim, int i, int j, int k);
+static inline simType wlapl(simType *data, int dof, int i, int j, int k);
+
 
 /* potential function */
 static inline simType dV(simType phi);
 
 /* Data convolution - generic smoothing to reduce Gibbs oscillations */
 static inline void convolve(simType *data, simType *temp, simType coeff);
+
 
 /* 
  * U^2 - commonly used quantity, stored so we only need to use it once.
@@ -74,7 +79,6 @@ static inline simType derivative(simType *data, int ddim /* direction of derivat
     case 3:
       return (data[INDEX(i,j,(k+1)%POINTS,dim)]
         - data[INDEX(i,j,(k+POINTS-1)%POINTS,dim)])/2/dx;
-
   }
 
   /* XXX */
@@ -83,37 +87,31 @@ static inline simType derivative(simType *data, int ddim /* direction of derivat
 
 
 /* 
- * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
+ * Taking derivatives.  Assumes toroidial boundary conditions in each direction.
+ * On the wedge base here, so derivative can only be taken at points 'inside' the base.
  */
-static inline simType derivative2(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
+static inline simType wderivative(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
 {
+  /* taking modulo here for each point */
   switch(ddim)
   {
     case 1:
-      return (
-        data[INDEX((i+1)%POINTS,j,k,dim)]
-        + data[INDEX((i+POINTS-1)%POINTS,j,k,dim)]
-        - 2*data[INDEX(i,j,k,dim)]
-        )/dx/dx;
+      return (data[INDEX((i+1)%3,j,k,dim)]
+        - data[INDEX((i+2)%3,j,k,dim)])/2/dx;
 
     case 2:
-      return (
-        data[INDEX(i,(j+1)%POINTS,k,dim)]
-        + data[INDEX(i,(j+POINTS-1)%POINTS,k,dim)]
-        - 2*data[INDEX(i,j,k,dim)]
-        )/dx/dx;
+      return (data[INDEX(i%3,(j+1)%POINTS,k,dim)]
+        - data[INDEX(i%3,(j+POINTS-1)%POINTS,k,dim)])/2/dx;
 
     case 3:
-      return (
-        data[INDEX(i,j,(k+1)%POINTS,dim)]
-        + data[INDEX(i,j,(k+POINTS-1)%POINTS,dim)]
-        - 2*data[INDEX(i,j,k,dim)]
-        )/dx/dx;
+      return (data[INDEX(i%3,j,(k+1)%POINTS,dim)]
+        - data[INDEX(i%3,j,(k+POINTS-1)%POINTS,dim)])/2/dx;
   }
 
   /* XXX */
   return 0;
 }
+
 
 /* 
  * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
@@ -123,6 +121,7 @@ static inline simType lapl(simType *data, int dof, int i, int j, int k)
 {
   return (
     (
+      // Edge-differences
       data[INDEX((i+1)%POINTS,(j+1)%POINTS,k,dof)] + data[INDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
       + data[INDEX((i+1)%POINTS,j,(k+1)%POINTS,dof)] + data[INDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
       + data[INDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,dof)] + data[INDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
@@ -131,11 +130,39 @@ static inline simType lapl(simType *data, int dof, int i, int j, int k)
       + data[INDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
     )
     + 2.0*(
+      // Center-differences
       data[INDEX((i+1)%POINTS,j,k,dof)] + data[INDEX(i,(j+1)%POINTS,k,dof)] + data[INDEX(i,j,(k+1)%POINTS,dof)]
       + data[INDEX((i-1+POINTS)%POINTS,j,k,dof)] + data[INDEX(i,(j-1+POINTS)%POINTS,k,dof)] + data[INDEX(i,j,(k-1+POINTS)%POINTS,dof)]
     )
     - 24.0*(
       data[INDEX(i,j,k,dof)]
+    )
+  )/6.0/dx/dx;
+}
+
+/* 
+ * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
+ * Bit higher order scheme here than just taking 2nd derivatives.
+ */
+static inline simType wlapl(simType *data, int dof, int i, int j, int k)
+{
+  return (
+    (
+      // Edge-differences
+      data[INDEX((i+1)%3,(j+1)%POINTS,k,dof)] + data[INDEX((i+1)%3,(j-1+POINTS)%POINTS,k,dof)]
+      + data[INDEX((i+1)%3,j,(k+1)%POINTS,dof)] + data[INDEX((i+1)%3,j,(k-1+POINTS)%POINTS,dof)]
+      + data[INDEX((i+2)%3,(j+1)%POINTS,k,dof)] + data[INDEX((i+2)%3,(j-1+POINTS)%POINTS,k,dof)]
+      + data[INDEX((i+2)%3,j,(k+1)%POINTS,dof)] + data[INDEX((i+2)%3,j,(k-1+POINTS)%POINTS,dof)]
+      + data[INDEX(i%3,(j+1)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i%3,(j+1)%POINTS,(k-1+POINTS)%POINTS,dof)]
+      + data[INDEX(i%3,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i%3,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
+    )
+    + 2.0*(
+      // Center-differences
+      data[INDEX((i+1)%3,j,k,dof)] + data[INDEX(i%3,(j+1)%POINTS,k,dof)] + data[INDEX(i%3,j,(k+1)%POINTS,dof)]
+      + data[INDEX((i+2)%3,j,k,dof)] + data[INDEX(i%3,(j-1+POINTS)%POINTS,k,dof)] + data[INDEX(i%3,j,(k-1+POINTS)%POINTS,dof)]
+    )
+    - 24.0*(
+      data[INDEX(i%3,j,k,dof)]
     )
   )/6.0/dx/dx;
 }

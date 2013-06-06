@@ -76,27 +76,6 @@ int main(int argc, char **argv)
   if(len_dir_name != 0)
     mkdir(filedata.data_dir, 0755);
 
-  /* Preallocated storage space for calculated quantities */
-  PointData paq;
-
-  /* Fluid/field storage space for data on 3 dimensional grid. */
-  simType *fields, *fieldsnext, **rks;
-  fields      = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
-  fieldsnext  = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
-  /* extra storage for intermediate RK steps */
-  rks = (simType **) malloc(RK_STEPS * sizeof(simType *));
-  for(n = 0; n < RK_STEPS; n++)
-  {
-    rks[n] = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
-  }
-
-/* Gravitational perturbation storage */
-// let's just evolve 2 degrees of freedom for now
-//  simType *hij, *lij, *STTij;
-//  hij = (simType *) malloc(GRID_STORAGE * 2 * sizeof(simType));
-//  lij = (simType *) malloc(GRID_STORAGE * 2 * sizeof(simType));
-//  STTij = (simType *) malloc(GRID_STORAGE * sizeof(simType));
-
   /* some validation for sampling rates */
   if(MAX_STEPS < STEPS_TO_SAMPLE || POINTS < POINTS_TO_SAMPLE || MAX_STEPS < STEPS_TO_DUMP)
   {
@@ -138,6 +117,24 @@ int main(int argc, char **argv)
   /* also write this information to file */
   writeinfo(filedata);
 
+
+  /* Preallocated storage space for calculated quantities */
+  PointData paq;
+
+  /* Fluid/field storage space for data on 3 dimensional grid. */
+  simType *fields, *wedge, *tail, *after;
+  // actual grid
+  fields     = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
+  // For the "wedge", R^2 storage locations are needed.
+  wedge      = (simType *) malloc(AREA_STORAGE * METHOD_ORDER * METHOD_ORDER * ((long long) sizeof(simType)));
+  // Values calculated for points inside the wedge must be stored until it has passed by
+  // call this the "tail" - requires 2*R-1 locations.
+  tail       = (simType *) malloc(AREA_STORAGE * (2*METHOD_ORDER-1) * ((long long) sizeof(simType)));
+  // Initial values calculated in the wedge can't be stored until it's come back and finished calculating
+  // Basically, a 'snapshot' of the first full "tail" - call this the 'afterimage'.
+  after = (simType *) malloc(AREA_STORAGE * 2 * METHOD_ORDER * ((long long) sizeof(simType)));
+
+
   if(0 == read_initial_step)
   {
     /* initialize data in static bubble configuration */
@@ -148,7 +145,7 @@ int main(int argc, char **argv)
           // 0-component is log of energy density
           fields[INDEX(i,j,k,0)] = log(0.1);
 
-          // velocity pattern
+          // velocity pattern - at rest
           fields[INDEX(i,j,k,1)] = 0.0;
           fields[INDEX(i,j,k,2)] = 0.0;
           fields[INDEX(i,j,k,3)] = 0.0;
@@ -198,6 +195,7 @@ int main(int argc, char **argv)
   for (s=1; s<=MAX_STEPS; s++)
   {
 
+/* TODO:
     // write data if necessary
     if(s % T_SAMPLEINT == 0)
     {
@@ -212,135 +210,117 @@ int main(int argc, char **argv)
       dumpstate(fieldsnext, filedata);
       filedata.fwrites++;
     } // end write step
+/**/
 
     if(DUMP_STRIP)
     {
       dumpstrip(fields, filedata);
     }
 
-    // write full dump and Hartley Transform data if appropriate
-    if(s % T_DUMPINT == 0)
-    {
-      /* fieldsnext isn't being used, so we can pass it in as storage */
-      //printf("\nDumping HT for step %i of %i ...\n", s, MAX_STEPS);
-      //fflush(stdout);
-      hartleydump(fields, fieldsnext, filedata);
-    }
 
-
-/* Work through normal Euler method. */
-/****
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      evolve(fields, fieldsnext, fields, 1.0, &paq, i, j, k);
-      // gw_evolve(hij, lij, STTij, &paq, i, j, k);
-    }
-/****/
-
-
-/* 2nd-order RK method. */
-/****/
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      // midpoint calculation first
-      evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
-    }
-    #pragma omp parallel for default(shared) private(i, j, k, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      // final state calculation next
-      evolve(fields, fieldsnext, rks[0], 1.0, &paq, i, j, k);
-    }
-/****/
-
-
-/* Standard 4th-order RK method. Requires 2 extra RK grids. */
-/****
-    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      evolve(fields, rks[0], fields, 0.5, &paq, i, j, k);
-    }
-    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      evolve(fields, rks[1], rks[0], 0.5, &paq, i, j, k);
-      for(u=0; u<DOF; u++)
-        fieldsnext[INDEX(i,j,k,u)] = 2*rks[1][INDEX(i,j,k,u)] + rks[0][INDEX(i,j,k,u)];
-    }
-    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      // reuse rks[0] - really rks[2]
-      evolve(fields, rks[0], rks[1], 1.0, &paq, i, j, k);
-      for(u=0; u<DOF; u++)
-        fieldsnext[INDEX(i,j,k,u)] += rks[0][INDEX(i,j,k,u)];
-    }
-    #pragma omp parallel for default(shared) private(i, j, k, u, paq) num_threads(threads)
-    LOOP3(i,j,k)
-    {
-      // reuse rks[1] now - really rks[3]
-      evolvediff(rks[0], rks[1], &paq, i, j, k);
-      for(u=0; u<DOF; u++)
-      {
-        fieldsnext[INDEX(i,j,k,u)] += dt/2.0*rks[1][INDEX(i,j,k,u)] - fields[INDEX(i,j,k,u)];
-        fieldsnext[INDEX(i,j,k,u)] /= 3.0;
-      }
-    }
-/****/
-
-/* Memory-efficient RK4 implementation, hopefully at no speed cost.  Requires several "slice" grids, forming a "wedge". */
-/* Will hopefully save a factor of 
-/****/
-    /* Fastest implementation should only require O(L^2) storage space, not O(L^3) (L=POINTS).
-     * Need to implement a tapered grid of points - each step will require all adjacent points in previous step
-     *   -> Last (4th) step only needs to implement a 1xLxL slice, 3rd a 3xLxL, 2nd last a 5xLxL, and 1st a 7xLxL.
-     *   -> Forms sort of a "wedge", tapered structure in memoru.  16xLxL memory locations needed - better than 4xLxLxL.
-     * The first step must be calculated using a 9xLxL swath of the original grid, but once a 1xLxL slice is done,
-     * it can be updated on the initial grid, removing the need for a final grid.
-     * Duplicate storage - two copies of the "wedge" structure will still be needed.  This is (a) so values saved in the 
-     * grid won't back-pollute, and (b) to remove the need for repeated calculations.  Memory-speed tradeoff made here.
-     * So the final amount of memory locations needed is 32xLxL, one for each DOF.
-     */
-
-    // Build initial wedge
-      // for();
-      // use StorageWedge struct?
-    // Move wedge along
-      // Set first order strip
-      // Set second order strip
-      // Set third order strip
-      // Set fourth order strip
-      // Add back into grid
-    // Stop early, and "merge" the wedges back together.
-/****/
-
-    // if(s%50 == 0)
+// TODO:
+    // // write full dump and Hartley Transform data if appropriate
+    // if(s % T_DUMPINT == 0)
     // {
-    //   // perform convolution - smooth out any numerical oscillations forming
-    //   convolve(fieldsnext, fields, 0.252);
+    //    fieldsnext isn't being used, so we can pass it in as storage 
+    //   //printf("\nDumping HT for step %i of %i ...\n", s, MAX_STEPS);
+    //   //fflush(stdout);
+    //   hartleydump(fields, fieldsnext, filedata);
     // }
-    
 
-    // store new field data
-    LOOP4(i,j,k,u)
+
+/****
+ * Memory-efficient midpoint implementation, hopefully at no significant speed cost.
+ * Requires several area grids, forming a "wedge", a "tail" of values anteceeding the wedge,
+ * and an initial snapshot of the tail, an "afterimage".
+ * For the midpoint method:
+ *   - wedge stores 4 grids (first 3 are 'base', last is the 'peak')
+ *   - afterimage holds first 2 peak calculations
+ *   - tail stores 2 peaks
+ * TODO: Parallelize on the j, k loops (area calculations).
+ */
+
+    // initial wedge and (centered on i=0)
+      for(i=-1; i<=1; i++) {
+        // populate wedge
+        LOOP2(j,k)
+          g2wevolve(fields, wedge, &paq, i, j, k);
+      }
+
+    // build afterimage and tail
+      // first afterimage
+      LOOP2(j,k)
+      {
+        w2pevolve(wedge, &paq, 0, j, k);
+        for(u=0; u<DOF; u++) {
+          after[INDEX(0,j,k,u)] = wedge[INDEX(4,j,k,u)];
+        }
+      }
+      // roll wedge base forward
+      LOOP2(j,k)
+        g2wevolve(fields, wedge, &paq, 2, j, k);
+      // second afterimage
+      LOOP2(j,k)
+      {
+        w2pevolve(wedge, &paq, 1, j, k);
+        for(u=0; u<DOF; u++) {
+          after[INDEX(1,j,k,u)] = wedge[INDEX(4,j,k,u)];
+        }
+      }
+
+    // Build the initial tail: two more roll increments
+    LOOP2(j,k)
+      g2wevolve(fields, wedge, &paq, 3, j, k);
+    LOOP2(j,k)
     {
-#ifdef DEBUG
-      /* check for NaN */
-      if(isnan(fieldsnext[INDEX(i,j,k,u)]))
-      {
-        /* do something! */
+      w2pevolve(wedge, &paq, 2, j, k);
+      for(u=0; u<DOF; u++) {
+        tail[INDEX(2%2,j,k,u)] = wedge[INDEX(4,j,k,u)];
       }
-      else
-      {
-        fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
-      }
-#else
-      fields[INDEX(i,j,k,u)] = fieldsnext[INDEX(i,j,k,u)];
-#endif
     }
+    LOOP2(j,k)
+      g2wevolve(fields, wedge, &paq, 4, j, k);
+    LOOP2(j,k)
+    {
+      w2pevolve(wedge, &paq, 3, j, k);
+      for(u=0; u<DOF; u++) {
+        tail[INDEX(3%2,j,k,u)] = wedge[INDEX(4,j,k,u)];
+      }
+    }
+
+    // finally: starting wedge
+    LOOP2(j,k)
+      g2wevolve(fields, wedge, &paq, 5, j, k);
+    LOOP2(j,k)
+    {
+      w2pevolve(wedge, &paq, 4, j, k);
+    }
+
+    // Move along, move along home
+    for(i=6; i<=POINTS; i++) { // need to re-calculate wedge point @ i=0
+      // roll base along
+      LOOP2(j,k)
+        g2wevolve(fields, wedge, &paq, i, j, k);
+
+      LOOP2(j,k)
+        for(u=0; u<DOF; u++)
+        {
+          // grid <- tail <- peak <- base
+          fields[INDEX(i-4,j,k,u)] = tail[INDEX((i-4)%2,j,k,u)]; // tail to grid
+          tail[INDEX((i-2)%2,j,k,u)] = wedge[INDEX(4,j,k,u)];  // peak back in tail
+          w2pevolve(wedge, &paq, i-1, j, k);
+        }
+    }
+
+    // Done; store the afterimage in the fields.
+    LOOP2(j,k)
+      for(u=0; i<DOF; u++)
+      {
+        fields[INDEX(0,j,k,u)] = after[INDEX(0,j,k,u)];
+        fields[INDEX(1,j,k,u)] = after[INDEX(1,j,k,u)];
+      }
+
+/** End wedge method **/
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < 0)
     {
@@ -468,20 +448,28 @@ static inline simType ddtfield_evfn(PointData *paq)
 }
 
 
+/**
+ * Note: these functions are now specific to the midpoint method.
+ * Roll back to 0f66228 for old, non-wedge code.
+ */
+
 /*
  * Calculate commonly used quantities at each point in the simulation.  Quantities are contained within a
  * struct - ideally this will not be any faster or slower than explicitly writing out each quantity.
+ * Following this, calculate the next step.
  */
-void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
+
+// version evolving from grid to wedge base
+void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k)
 {
   int u, n;
 
   // Field data at pertinent point
   for(n=0; n<=5; n++) {
-    paq->fields[n] = fields[INDEX(i,j,k,n)];
+    paq->fields[n] = grid[INDEX(i,j,k,n)];
   }
 
-  // [COMMON_QUANTITIES]
+  // [COMMON QUANTITIES]
   paq->u2 = magu2(paq);
   paq->ut = Ut(paq);
   paq->ut2 = Ut2(paq);
@@ -490,66 +478,78 @@ void calculatequantities(simType *fields, PointData *paq, int i, int j, int k)
   // [GRADIENTS]
   for(u=0; u<5; u++) {
     n = 0;
-     for(n=1; n<=3; n++)
-       paq->gradients[n][u] = derivative(fields, n, u, i, j, k);
+    for(n=1; n<=3; n++)
+      paq->gradients[n][u] = derivative(grid, n, u, i, j, k);
   }
+  paq->lap = lapl(grid, 4, i, j, k);
 
-  // paq->derivs2[1] = derivative2(fields, 1, 4, i, j, k);
-  // paq->derivs2[2] = derivative2(fields, 2, 4, i, j, k);
-  // paq->derivs2[3] = derivative2(fields, 3, 4, i, j, k);
-  paq->lap = lapl(fields, 4, i, j, k);
-
-  // compute source term information [SOURCE]
-  // little j is source, big J is some wonko function of source
+  // [SOURCES] little j is source, big J is some wonko function of source
   jsource(paq);
   Jsource(paq);
 
+  // [DERIVED QUANTITIES]
   paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
   paq->srcsum = sumvv(paq->fields, paq->ji);
   paq->trgrad = sp_tr(paq->gradients);
   paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
 
-  return;
+  // [EVOLVE GRID TO WEDGE BASE]
+  // energy density
+   wedge[INDEX(i%3,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*energy_evfn(paq)/2.0;
+  // fluid
+   wedge[INDEX(i%3,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*fluid_evfn(paq, 1)/2.0;
+   wedge[INDEX(i%3,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*fluid_evfn(paq, 2)/2.0;
+   wedge[INDEX(i%3,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*fluid_evfn(paq, 3)/2.0;
+  // field
+   wedge[INDEX(i%3,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*field_evfn(paq)/2.0;
+  // field derivative
+   wedge[INDEX(i%3,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*ddtfield_evfn(paq)/2.0;
 }
 
 
-/*
- * Evolution step of simulation - compute next step.
- */
-void evolve(simType *initial, simType *final, simType *intermediate, simType coeff, PointData *paq,
-  int i, int j, int k)
+// version evolving from wedge base to wedge peak
+void w2pevolve(simType *wedge, PointData *paq, int i, int j, int k)
 {
-  calculatequantities(intermediate, paq, i, j, k);
+  int u, n;
 
+  // Field data at pertinent point
+  for(n=0; n<=5; n++) {
+    paq->fields[n] = wedge[INDEX(i%3,j,k,n)];
+  }
+
+  // [COMMON QUANTITIES]
+  paq->u2 = magu2(paq);
+  paq->ut = Ut(paq);
+  paq->ut2 = Ut2(paq);
+  paq->relw = (1.0 - W_EOSm1 * paq->u2);
+
+  // [GRADIENTS]
+  for(u=0; u<5; u++) {
+    n = 0;
+    for(n=1; n<=3; n++)
+      paq->gradients[n][u] = wderivative(wedge, n, u, i, j, k);
+  }
+  paq->lap = wlapl(wedge, 4, i, j, k);
+
+  // [SOURCES] little j is source, big J is some wonko function of source
+  jsource(paq);
+  Jsource(paq);
+
+  // [DERIVED QUANTITIES]
+  paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
+  paq->srcsum = sumvv(paq->fields, paq->ji);
+  paq->trgrad = sp_tr(paq->gradients);
+  paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
+
+  // [EVOLVE WEDGE BASE TO PEAK]
   // energy density
-   final[INDEX(i,j,k,0)] = initial[INDEX(i,j,k,0)] + coeff*dt*energy_evfn(paq);
+   wedge[INDEX(4,j,k,0)] = wedge[INDEX(i%3,j,k,0)] + dt*energy_evfn(paq);
   // fluid
-   final[INDEX(i,j,k,1)] = initial[INDEX(i,j,k,1)] + coeff*dt*fluid_evfn(paq, 1);
-   final[INDEX(i,j,k,2)] = initial[INDEX(i,j,k,2)] + coeff*dt*fluid_evfn(paq, 2);
-   final[INDEX(i,j,k,3)] = initial[INDEX(i,j,k,3)] + coeff*dt*fluid_evfn(paq, 3);
+   wedge[INDEX(4,j,k,1)] = wedge[INDEX(i%3,j,k,1)] + dt*fluid_evfn(paq, 1);
+   wedge[INDEX(4,j,k,2)] = wedge[INDEX(i%3,j,k,2)] + dt*fluid_evfn(paq, 2);
+   wedge[INDEX(4,j,k,3)] = wedge[INDEX(i%3,j,k,3)] + dt*fluid_evfn(paq, 3);
   // field
-   final[INDEX(i,j,k,4)] = initial[INDEX(i,j,k,4)] + coeff*dt*field_evfn(paq);
+   wedge[INDEX(4,j,k,4)] = wedge[INDEX(i%3,j,k,4)] + dt*field_evfn(paq);
   // field derivative
-   final[INDEX(i,j,k,5)] = initial[INDEX(i,j,k,5)] + coeff*dt*ddtfield_evfn(paq);
-}
-
-
-/*
- * Evolution step of simulation - compute/store only evolution functions.
- */
-void evolvediff(simType *input, simType *output, PointData *paq,
-  int i, int j, int k)
-{
-  calculatequantities(input, paq, i, j, k);
-
-  // energy density
-   output[INDEX(i,j,k,0)] = energy_evfn(paq);
-  // fluid
-   output[INDEX(i,j,k,1)] = fluid_evfn(paq, 1);
-   output[INDEX(i,j,k,2)] = fluid_evfn(paq, 2);
-   output[INDEX(i,j,k,3)] = fluid_evfn(paq, 3);
-  // field
-   output[INDEX(i,j,k,4)] = field_evfn(paq);
-  // field derivative
-   output[INDEX(i,j,k,5)] = ddtfield_evfn(paq);
+   wedge[INDEX(4,j,k,5)] = wedge[INDEX(i%3,j,k,5)] + dt*ddtfield_evfn(paq);
 }
