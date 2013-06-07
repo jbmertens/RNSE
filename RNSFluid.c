@@ -228,12 +228,11 @@ int main(int argc, char **argv)
 
 /****
  * Memory-efficient midpoint implementation, hopefully at no significant speed cost.
- * Requires several area grids, forming a "wedge", a "tail" of values anteceeding the wedge,
- * and an initial snapshot of the tail, an "afterimage".
+ * Requires several area grids, forming a "wedge", and an initial snapshot of the
+ * first two calculations, an "afterimage".
  * For the midpoint method:
  *   - wedge stores 4 grids (first 3 are 'base', last is the 'peak')
  *   - afterimage holds first 2 peak calculations
- *   - tail stores 2 peaks
  * Parallelize on the j, k loops (area calculations).
  */
 
@@ -294,7 +293,7 @@ int main(int argc, char **argv)
       {
         for(u=0; u<DOF; u++)
         {
-          fields[INDEX(i-2,j,k,u)] = wedge[INDEX(3,j,k,u)]; // tail to grid
+          fields[INDEX(i-2,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
         w2pevolve(wedge, &paq, i-1, j, k);
       }
