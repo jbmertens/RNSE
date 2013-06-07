@@ -122,16 +122,14 @@ int main(int argc, char **argv)
   PointData paq;
 
   /* Fluid/field storage space for data on 3 dimensional grid. */
-  simType *fields, *wedge, *tail, *after;
+  simType *fields, *wedge, *after;
   // actual grid
   fields     = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
   // For the "wedge", R^2 storage locations are needed.
+  // wedge[i=0-2] are 'base', wedge[i=3] is 'peak'
   wedge      = (simType *) malloc(AREA_STORAGE * METHOD_ORDER * METHOD_ORDER * ((long long) sizeof(simType)));
-  // Values calculated for points inside the wedge must be stored until it has passed by
-  // call this the "tail" - requires 2*R-1 locations.
-  tail       = (simType *) malloc(AREA_STORAGE * (2*METHOD_ORDER-1) * ((long long) sizeof(simType)));
   // Initial values calculated in the wedge can't be stored until it's come back and finished calculating
-  // Basically, a 'snapshot' of the first full "tail" - call this the 'afterimage'.
+  // Basically, a 'snapshot' of the first two peaks - call this the 'afterimage'.
   after = (simType *) malloc(AREA_STORAGE * 2 * METHOD_ORDER * ((long long) sizeof(simType)));
 
 
@@ -194,7 +192,6 @@ int main(int argc, char **argv)
   /* Actual Evolution code */
   for (s=1; s<=MAX_STEPS; s++)
   {
-    printf("Working on step %d\n", s);
 /* TODO:
     // write data if necessary
     if(s % T_SAMPLEINT == 0)
@@ -237,18 +234,20 @@ int main(int argc, char **argv)
  *   - wedge stores 4 grids (first 3 are 'base', last is the 'peak')
  *   - afterimage holds first 2 peak calculations
  *   - tail stores 2 peaks
- * TODO: Parallelize on the j, k loops (area calculations).
+ * Parallelize on the j, k loops (area calculations).
  */
 
     // initial wedge base (centered on i=0)
       for(i=POINTS-1; i<=POINTS+1; i++) {
         // populate wedge
+        #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
         LOOP2(j,k)
           g2wevolve(fields, wedge, &paq, i, j, k);
       }
 
-    // build afterimage and tail
-      // store afterimage of first tail point
+    // build afterimage
+      // store first peak afterimage
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
       {
         w2pevolve(wedge, &paq, 0, j, k);
@@ -256,12 +255,12 @@ int main(int argc, char **argv)
           after[INDEX(0,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
       }
-
       // roll wedge base forward
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, 2, j, k);
-
-      // second tail point afterimage
+      // second afterimage point
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
       {
         w2pevolve(wedge, &paq, 1, j, k);
@@ -270,52 +269,39 @@ int main(int argc, char **argv)
         }
       }
 
-    // Build the initial tail: two more roll increments
-    LOOP2(j,k)
-      g2wevolve(fields, wedge, &paq, 3, j, k);
-    LOOP2(j,k)
-    {
-      w2pevolve(wedge, &paq, 2, j, k);
-      for(u=0; u<DOF; u++) {
-        tail[INDEX(2%2,j,k,u)] = wedge[INDEX(3,j,k,u)];
-      }
-    }
-    LOOP2(j,k)
-      g2wevolve(fields, wedge, &paq, 4, j, k);
-    LOOP2(j,k)
-    {
-      w2pevolve(wedge, &paq, 3, j, k);
-      for(u=0; u<DOF; u++) {
-        tail[INDEX(3%2,j,k,u)] = wedge[INDEX(3,j,k,u)];
-      }
-    }
-
     // finally: starting wedge
-    LOOP2(j,k)
-      g2wevolve(fields, wedge, &paq, 5, j, k);
-    LOOP2(j,k)
-    {
-      w2pevolve(wedge, &paq, 4, j, k);
-    }
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      LOOP2(j,k)
+        g2wevolve(fields, wedge, &paq, 3, j, k);
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      LOOP2(j,k)
+      {
+        w2pevolve(wedge, &paq, 2, j, k);
+      }
 
     // Move along, move along home
-    for(i=6; i<=POINTS; i++)
+    for(i=4; i<=POINTS; i++) // i is position of leading wedge base point; i=1 is position of peak
     {
+      
       // roll base along
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, i, j, k);
 
-      // grid <- tail <- peak <- base
+      // grid <- peak <- base
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
+      {
         for(u=0; u<DOF; u++)
         {
-          fields[INDEX(i-4,j,k,u)] = tail[INDEX((i-4)%2,j,k,u)]; // tail to grid
-          tail[INDEX((i-2)%2,j,k,u)] = wedge[INDEX(3,j,k,u)];  // peak back in tail
-          w2pevolve(wedge, &paq, i-1, j, k);
+          fields[INDEX(i-2,j,k,u)] = wedge[INDEX(3,j,k,u)]; // tail to grid
         }
+        w2pevolve(wedge, &paq, i-1, j, k);
+      }
     }
 
     // Done; store the afterimage in the fields.
+    #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
     LOOP2(j,k)
       for(u=0; i<DOF; u++)
       {
