@@ -484,26 +484,27 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // [EVOLVE GRID TO WEDGE BASE]
   // energy density
-   wedge[INDEX(i%3,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*energy_evfn(paq)/2.0;
+   wedge[INDEX(i%3,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*0.5*energy_evfn(paq);
   // fluid
-   wedge[INDEX(i%3,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*fluid_evfn(paq, 1)/2.0;
-   wedge[INDEX(i%3,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*fluid_evfn(paq, 2)/2.0;
-   wedge[INDEX(i%3,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*fluid_evfn(paq, 3)/2.0;
+   wedge[INDEX(i%3,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*0.5*fluid_evfn(paq, 1);
+   wedge[INDEX(i%3,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*0.5*fluid_evfn(paq, 2);
+   wedge[INDEX(i%3,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*0.5*fluid_evfn(paq, 3);
   // field
-   wedge[INDEX(i%3,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*field_evfn(paq)/2.0;
+   wedge[INDEX(i%3,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*0.5*field_evfn(paq);
   // field derivative
-   wedge[INDEX(i%3,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*ddtfield_evfn(paq)/2.0;
+   wedge[INDEX(i%3,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*0.5*ddtfield_evfn(paq);
+
 }
 
 
 // version evolving from wedge base to wedge peak
-void w2pevolve(simType *wedge, PointData *paq, int i, int j, int k)
+void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k)
 {
   int u, n;
 
   // Field data at pertinent point
   for(n=0; n<=5; n++) {
-    paq->fields[n] = wedge[INDEX(i%3,j,k,n)];
+    paq->fields[n] = wedge[WINDEX(i,j,k,n)];
   }
 
   // [COMMON QUANTITIES]
@@ -532,14 +533,14 @@ void w2pevolve(simType *wedge, PointData *paq, int i, int j, int k)
 
   // [EVOLVE WEDGE BASE TO PEAK]
   // energy density
-   wedge[INDEX(3,j,k,0)] = wedge[INDEX(i%3,j,k,0)] + dt*energy_evfn(paq);
+   wedge[INDEX(3,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*energy_evfn(paq);
   // fluid
-   wedge[INDEX(3,j,k,1)] = wedge[INDEX(i%3,j,k,1)] + dt*fluid_evfn(paq, 1);
-   wedge[INDEX(3,j,k,2)] = wedge[INDEX(i%3,j,k,2)] + dt*fluid_evfn(paq, 2);
-   wedge[INDEX(3,j,k,3)] = wedge[INDEX(i%3,j,k,3)] + dt*fluid_evfn(paq, 3);
+   wedge[INDEX(3,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*fluid_evfn(paq, 1);
+   wedge[INDEX(3,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*fluid_evfn(paq, 2);
+   wedge[INDEX(3,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*fluid_evfn(paq, 3);
   // field
-   wedge[INDEX(3,j,k,4)] = wedge[INDEX(i%3,j,k,4)] + dt*field_evfn(paq);
+   wedge[INDEX(3,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*field_evfn(paq);
   // field derivative
-   wedge[INDEX(3,j,k,5)] = wedge[INDEX(i%3,j,k,5)] + dt*ddtfield_evfn(paq);
+   wedge[INDEX(3,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*ddtfield_evfn(paq);
 
 }
