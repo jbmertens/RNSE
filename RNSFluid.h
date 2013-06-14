@@ -10,7 +10,7 @@ static inline simType field_evfn(PointData *paq);
 static inline simType ddtfield_evfn(PointData *paq);
 
 void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k);
-void w2pevolve(simType *wedge, PointData *paq, int i, int j, int k);
+void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k);
 
 /* Deal with fluid coupling. */
 static inline simType getXI();

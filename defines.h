@@ -64,6 +64,7 @@
 
 /* array element access macros */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*((i)%POINTS) + DOF*POINTS*(j) + DOF*(k) + (l))
+#define WINDEX(i,j,k,l) (DOF*POINTS*POINTS*(((i)%POINTS)%3) + DOF*POINTS*(j) + DOF*(k) + (l))
 /* Common for loop structure */
 #define LOOP2(j,k) for(j=0; j<POINTS; j++) \
                    for(k=0; k<POINTS; k++)

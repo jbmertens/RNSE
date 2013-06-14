@@ -192,6 +192,7 @@ int main(int argc, char **argv)
   /* Actual Evolution code */
   for (s=1; s<=MAX_STEPS; s++)
   {
+
 /* TODO:
     // write data if necessary
     if(s % T_SAMPLEINT == 0)
@@ -249,7 +250,7 @@ int main(int argc, char **argv)
       #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
       {
-        w2pevolve(wedge, &paq, 0, j, k);
+        w2pevolve(fields, wedge, &paq, 0, j, k);
         for(u=0; u<DOF; u++) {
           after[INDEX(0,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
@@ -262,7 +263,7 @@ int main(int argc, char **argv)
       #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
       {
-        w2pevolve(wedge, &paq, 1, j, k);
+        w2pevolve(fields, wedge, &paq, 1, j, k);
         for(u=0; u<DOF; u++) {
           after[INDEX(1,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
@@ -275,11 +276,11 @@ int main(int argc, char **argv)
       #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
       {
-        w2pevolve(wedge, &paq, 2, j, k);
+        w2pevolve(fields, wedge, &paq, 2, j, k);
       }
 
     // Move along, move along home
-    for(i=4; i<=POINTS; i++) // i is position of leading wedge base point; i=1 is position of peak
+    for(i=4; i<=POINTS; i++) // i is position of leading wedge base point; i-1 is position of peak
     {
       
       // roll base along
@@ -295,7 +296,7 @@ int main(int argc, char **argv)
         {
           fields[INDEX(i-2,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
-        w2pevolve(wedge, &paq, i-1, j, k);
+        w2pevolve(fields, wedge, &paq, i-1, j, k);
       }
     }
 

@@ -96,16 +96,16 @@ static inline simType wderivative(simType *data, int ddim /* direction of deriva
   switch(ddim)
   {
     case 1:
-      return (data[INDEX((i+1)%3,j,k,dim)]
-        - data[INDEX((i+2)%3,j,k,dim)])/2/dx;
+      return (data[WINDEX((i+1)%POINTS,j,k,dim)]
+        - data[WINDEX((i+POINTS-1)%POINTS,j,k,dim)])/2/dx;
 
     case 2:
-      return (data[INDEX(i%3,(j+1)%POINTS,k,dim)]
-        - data[INDEX(i%3,(j+POINTS-1)%POINTS,k,dim)])/2/dx;
+      return (data[WINDEX(i,(j+1)%POINTS,k,dim)]
+        - data[WINDEX(i,(j+POINTS-1)%POINTS,k,dim)])/2/dx;
 
     case 3:
-      return (data[INDEX(i%3,j,(k+1)%POINTS,dim)]
-        - data[INDEX(i%3,j,(k+POINTS-1)%POINTS,dim)])/2/dx;
+      return (data[WINDEX(i,j,(k+1)%POINTS,dim)]
+        - data[WINDEX(i,j,(k+POINTS-1)%POINTS,dim)])/2/dx;
   }
 
   /* XXX */
@@ -149,20 +149,20 @@ static inline simType wlapl(simType *data, int dof, int i, int j, int k)
   return (
     (
       // Edge-differences
-      data[INDEX((i+1)%3,(j+1)%POINTS,k,dof)] + data[INDEX((i+1)%3,(j-1+POINTS)%POINTS,k,dof)]
-      + data[INDEX((i+1)%3,j,(k+1)%POINTS,dof)] + data[INDEX((i+1)%3,j,(k-1+POINTS)%POINTS,dof)]
-      + data[INDEX((i+2)%3,(j+1)%POINTS,k,dof)] + data[INDEX((i+2)%3,(j-1+POINTS)%POINTS,k,dof)]
-      + data[INDEX((i+2)%3,j,(k+1)%POINTS,dof)] + data[INDEX((i+2)%3,j,(k-1+POINTS)%POINTS,dof)]
-      + data[INDEX(i%3,(j+1)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i%3,(j+1)%POINTS,(k-1+POINTS)%POINTS,dof)]
-      + data[INDEX(i%3,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i%3,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
+      data[WINDEX((i+1)%POINTS,(j+1)%POINTS,k,dof)] + data[WINDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
+      + data[WINDEX((i+1)%POINTS,j,(k+1)%POINTS,dof)] + data[WINDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
+      + data[WINDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,dof)] + data[WINDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
+      + data[WINDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,dof)] + data[WINDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
+      + data[WINDEX(i,(j+1)%POINTS,(k+1)%POINTS,dof)] + data[WINDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,dof)]
+      + data[WINDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[WINDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
     )
     + 2.0*(
       // Center-differences
-      data[INDEX((i+1)%3,j,k,dof)] + data[INDEX(i%3,(j+1)%POINTS,k,dof)] + data[INDEX(i%3,j,(k+1)%POINTS,dof)]
-      + data[INDEX((i+2)%3,j,k,dof)] + data[INDEX(i%3,(j-1+POINTS)%POINTS,k,dof)] + data[INDEX(i%3,j,(k-1+POINTS)%POINTS,dof)]
+      data[WINDEX((i+1)%POINTS,j,k,dof)] + data[WINDEX(i,(j+1)%POINTS,k,dof)] + data[WINDEX(i,j,(k+1)%POINTS,dof)]
+      + data[WINDEX((i-1+POINTS)%POINTS,j,k,dof)] + data[WINDEX(i,(j-1+POINTS)%POINTS,k,dof)] + data[WINDEX(i,j,(k-1+POINTS)%POINTS,dof)]
     )
     - 24.0*(
-      data[INDEX(i%3,j,k,dof)]
+      data[WINDEX(i,j,k,dof)]
     )
   )/6.0/dx/dx;
 }
