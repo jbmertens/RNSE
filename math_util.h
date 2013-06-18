@@ -17,12 +17,8 @@ static inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc, int s);
 static inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4]);
 static inline simType sp_tr(simType t1[4][DOF]);
 
-static inline simType derivative(simType *data, int ddim, int dim, int i, int j, int k);
-static inline simType lapl(simType *data, int dof, int i, int j, int k);
-
-static inline simType wderivative(simType *data, int ddim, int dim, int i, int j, int k);
-static inline simType wlapl(simType *data, int dof, int i, int j, int k);
-
+static inline simType derivative(PointData *paq, int ddim, int dim, int i, int j, int k);
+static inline simType lapl(PointData *paq, int i, int j, int k);
 
 /* potential function */
 static inline simType dV(simType phi);
@@ -62,50 +58,19 @@ static inline simType Ut(PointData *paq)
 
 /* 
  * Taking derivatives.  Assumes toroidial boundary conditions in each direction.
- */
-static inline simType derivative(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
-{
-  /* taking modulo here for each point */
-  switch(ddim)
-  {
-    case 1:
-      return (data[INDEX((i+1)%POINTS,j,k,dim)]
-        - data[INDEX((i+POINTS-1)%POINTS,j,k,dim)])/2/dx;
-
-    case 2:
-      return (data[INDEX(i,(j+1)%POINTS,k,dim)]
-        - data[INDEX(i,(j+POINTS-1)%POINTS,k,dim)])/2/dx;
-
-    case 3:
-      return (data[INDEX(i,j,(k+1)%POINTS,dim)]
-        - data[INDEX(i,j,(k+POINTS-1)%POINTS,dim)])/2/dx;
-  }
-
-  /* XXX */
-  return 0;
-}
-
-
-/* 
- * Taking derivatives.  Assumes toroidial boundary conditions in each direction.
  * On the wedge base here, so derivative can only be taken at points 'inside' the base.
  */
-static inline simType wderivative(simType *data, int ddim /* direction of derivative */, int dim, int i, int j, int k)
+static inline simType derivative(PointData *paq, int ddim /* direction of derivative */, int dim, int i, int j, int k)
 {
   /* taking modulo here for each point */
   switch(ddim)
   {
     case 1:
-      return (data[WINDEX((i+1)%POINTS,j,k,dim)]
-        - data[WINDEX((i+POINTS-1)%POINTS,j,k,dim)])/2/dx;
-
+      return (paq->adjacentFields[0][dim] - paq->adjacentFields[3][dim])/2/dx;
     case 2:
-      return (data[WINDEX(i,(j+1)%POINTS,k,dim)]
-        - data[WINDEX(i,(j+POINTS-1)%POINTS,k,dim)])/2/dx;
-
+      return (paq->adjacentFields[1][dim] - paq->adjacentFields[4][dim])/2/dx;
     case 3:
-      return (data[WINDEX(i,j,(k+1)%POINTS,dim)]
-        - data[WINDEX(i,j,(k+POINTS-1)%POINTS,dim)])/2/dx;
+      return (paq->adjacentFields[2][dim] - paq->adjacentFields[5][dim])/2/dx;
   }
 
   /* XXX */
@@ -114,55 +79,25 @@ static inline simType wderivative(simType *data, int ddim /* direction of deriva
 
 
 /* 
- * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
+ * Taking second derivatives - only of the field.  Again, assumes toroidial boundary conditions in each direction.
  * Bit higher order scheme here than just taking 2nd derivatives.
  */
-static inline simType lapl(simType *data, int dof, int i, int j, int k)
+static inline simType lapl(PointData *paq, int i, int j, int k)
 {
   return (
     (
       // Edge-differences
-      data[INDEX((i+1)%POINTS,(j+1)%POINTS,k,dof)] + data[INDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
-      + data[INDEX((i+1)%POINTS,j,(k+1)%POINTS,dof)] + data[INDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
-      + data[INDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,dof)] + data[INDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
-      + data[INDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,dof)] + data[INDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
-      + data[INDEX(i,(j+1)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,dof)]
-      + data[INDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[INDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
+      paq->adjacentEdges[0] + paq->adjacentEdges[1] + paq->adjacentEdges[2] + paq->adjacentEdges[3]
+      + paq->adjacentEdges[4] + paq->adjacentEdges[5] + paq->adjacentEdges[6] + paq->adjacentEdges[7]
+      + paq->adjacentEdges[8] + paq->adjacentEdges[9] + paq->adjacentEdges[10] + paq->adjacentEdges[11]
     )
     + 2.0*(
       // Center-differences
-      data[INDEX((i+1)%POINTS,j,k,dof)] + data[INDEX(i,(j+1)%POINTS,k,dof)] + data[INDEX(i,j,(k+1)%POINTS,dof)]
-      + data[INDEX((i-1+POINTS)%POINTS,j,k,dof)] + data[INDEX(i,(j-1+POINTS)%POINTS,k,dof)] + data[INDEX(i,j,(k-1+POINTS)%POINTS,dof)]
+      paq->adjacentFields[0][4] + paq->adjacentFields[2][4] + paq->adjacentFields[3][4]
+      + paq->adjacentFields[3][4] + paq->adjacentFields[4][4] + paq->adjacentFields[5][4]
     )
     - 24.0*(
-      data[INDEX(i,j,k,dof)]
-    )
-  )/6.0/dx/dx;
-}
-
-/* 
- * Taking second derivatives.  Again, assumes toroidial boundary conditions in each direction.
- * Bit higher order scheme here than just taking 2nd derivatives.
- */
-static inline simType wlapl(simType *data, int dof, int i, int j, int k)
-{
-  return (
-    (
-      // Edge-differences
-      data[WINDEX((i+1)%POINTS,(j+1)%POINTS,k,dof)] + data[WINDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
-      + data[WINDEX((i+1)%POINTS,j,(k+1)%POINTS,dof)] + data[WINDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
-      + data[WINDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,dof)] + data[WINDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,dof)]
-      + data[WINDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,dof)] + data[WINDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,dof)]
-      + data[WINDEX(i,(j+1)%POINTS,(k+1)%POINTS,dof)] + data[WINDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,dof)]
-      + data[WINDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,dof)] + data[WINDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,dof)]
-    )
-    + 2.0*(
-      // Center-differences
-      data[WINDEX((i+1)%POINTS,j,k,dof)] + data[WINDEX(i,(j+1)%POINTS,k,dof)] + data[WINDEX(i,j,(k+1)%POINTS,dof)]
-      + data[WINDEX((i-1+POINTS)%POINTS,j,k,dof)] + data[WINDEX(i,(j-1+POINTS)%POINTS,k,dof)] + data[WINDEX(i,j,(k-1+POINTS)%POINTS,dof)]
-    )
-    - 24.0*(
-      data[WINDEX(i,j,k,dof)]
+      paq->fields[4]
     )
   )/6.0/dx/dx;
 }

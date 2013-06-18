@@ -12,6 +12,7 @@
 #include <omp.h>
 #include <fftw3.h>
 #include <getopt.h>
+#include <zlib.h>
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
@@ -30,7 +31,7 @@
 
 /* resolution parameters */
 #define SIZE    (6*R0)                         /* physical size in space */
-#define POINTS  ((long long) 512)              /* number of points on
+#define POINTS  ((long long) 100)              /* number of points on
                                                   lattice (each axis) */
 #define dx      ( 1.0*SIZE / (1.0*POINTS) )
 #define dt      (dx/10.0)
@@ -43,7 +44,7 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           1000            /* Maximum # of steps to run */
+#define MAX_STEPS           100            /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to
@@ -79,6 +80,8 @@ typedef double simType;
 /* data structure for storing calculated quantities at a point */
 typedef struct {
   simType fields[6];
+  simType adjacentFields[6][DOF];
+  simType adjacentEdges[12]; // only needed for laplacian at the moment
 
   simType gradients[4][DOF];
   simType derivs2[4];

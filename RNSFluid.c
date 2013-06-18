@@ -168,9 +168,9 @@ int main(int argc, char **argv)
                   // there are an even number of grid points. it will be lined
                   // up with a pixel.  But this is ok, even desirable if we
                   // want to look at a slice through the middle of the bubble.
-                  pow( (i*1.0-POINTS/2.0)*dx , 2)
-                  + pow( (j*1.0-POINTS/2.0)*dx , 2)
-                  + pow( (k*1.0-POINTS/2.0)*dx , 2)
+                  pow( (i*1.0-((double) POINTS)/2.0)*dx , 2)
+                  + pow( (j*1.0-((double) POINTS)/2.0)*dx , 2)
+                  + pow( (k*1.0-((double) POINTS)/2.0)*dx , 2)
                 ) - R0
               )
             ) - 0.025063; // spherically symmetric soliton/"bubble" solution
@@ -452,36 +452,41 @@ static inline simType ddtfield_evfn(PointData *paq)
 // version evolving from grid to wedge base
 void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k)
 {
-  int u, n;
+  int n;
 
-  // Field data at pertinent point
-  for(n=0; n<=5; n++) {
-    paq->fields[n] = grid[INDEX(i,j,k,n)];
-  }
+  // Field data near working point
+  for(n=0; n<=5; n++)
+    paq->fields[n] = wedge[INDEX(i,j,k,n)];
+  // adjacent to point (cut cache misses)
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[0][n] = grid[INDEX((i+1)%POINTS,j,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[3][n] = grid[INDEX((i-1+POINTS)%POINTS,j,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[1][n] = grid[INDEX(i,(j+1)%POINTS,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[4][n] = grid[INDEX(i,(j-1+POINTS)%POINTS,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[2][n] = grid[INDEX(i,j,(k+1)%POINTS,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[5][n] = grid[INDEX(i,j,(k-1+POINTS)%POINTS,n)];
 
-  // [COMMON QUANTITIES]
-  paq->u2 = magu2(paq);
-  paq->ut = Ut(paq);
-  paq->ut2 = Ut2(paq);
-  paq->relw = (1.0 - W_EOSm1 * paq->u2);
+  // Around edges (for laplacian; field values only)
+  paq->adjacentEdges[0] = grid[INDEX((i+1)%POINTS,(j+1)%POINTS,k,4)];
+  paq->adjacentEdges[1] = grid[INDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,4)];
+  paq->adjacentEdges[2] = grid[INDEX((i+1)%POINTS,j,(k+1)%POINTS,4)];
+  paq->adjacentEdges[3] = grid[INDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[4] = grid[INDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,4)];
+  paq->adjacentEdges[5] = grid[INDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,4)];
+  paq->adjacentEdges[6] = grid[INDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,4)];
+  paq->adjacentEdges[7] = grid[INDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[8] = grid[INDEX(i,(j+1)%POINTS,(k+1)%POINTS,4)];
+  paq->adjacentEdges[9] = grid[INDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[10] = grid[INDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,4)];
+  paq->adjacentEdges[11] = grid[INDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,4)];
 
-  // [GRADIENTS]
-  for(u=0; u<5; u++) {
-    n = 0;
-    for(n=1; n<=3; n++)
-      paq->gradients[n][u] = derivative(grid, n, u, i, j, k);
-  }
-  paq->lap = lapl(grid, 4, i, j, k);
-
-  // [SOURCES] little j is source, big J is some wonko function of source
-  jsource(paq);
-  Jsource(paq);
-
-  // [DERIVED QUANTITIES]
-  paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
-  paq->srcsum = sumvv(paq->fields, paq->ji);
-  paq->trgrad = sp_tr(paq->gradients);
-  paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
+  // calculate quantities used by evolution functions
+  calculatequantities(paq, i, j, k);
 
   // [EVOLVE GRID TO WEDGE BASE]
   // energy density
@@ -501,36 +506,41 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 // version evolving from wedge base to wedge peak
 void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k)
 {
-  int u, n;
+  int n;
 
-  // Field data at pertinent point
-  for(n=0; n<=5; n++) {
+  // Field data near working point
+  for(n=0; n<=5; n++)
     paq->fields[n] = wedge[WINDEX(i,j,k,n)];
-  }
+  // adjacent to point (cut cache misses)
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[0][n] = grid[WINDEX((i+1)%POINTS,j,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[3][n] = grid[WINDEX((i-1+POINTS)%POINTS,j,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[1][n] = grid[WINDEX(i,(j+1)%POINTS,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[4][n] = grid[WINDEX(i,(j-1+POINTS)%POINTS,k,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[2][n] = grid[WINDEX(i,j,(k+1)%POINTS,n)];
+  for(n=0; n<=5; n++)
+    paq->adjacentFields[5][n] = grid[WINDEX(i,j,(k-1+POINTS)%POINTS,n)];
 
-  // [COMMON QUANTITIES]
-  paq->u2 = magu2(paq);
-  paq->ut = Ut(paq);
-  paq->ut2 = Ut2(paq);
-  paq->relw = (1.0 - W_EOSm1 * paq->u2);
+  // Around edges (for laplacian; field values only)
+  paq->adjacentEdges[0] = grid[WINDEX((i+1)%POINTS,(j+1)%POINTS,k,4)];
+  paq->adjacentEdges[1] = grid[WINDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,4)];
+  paq->adjacentEdges[2] = grid[WINDEX((i+1)%POINTS,j,(k+1)%POINTS,4)];
+  paq->adjacentEdges[3] = grid[WINDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[4] = grid[WINDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,4)];
+  paq->adjacentEdges[5] = grid[WINDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,4)];
+  paq->adjacentEdges[6] = grid[WINDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,4)];
+  paq->adjacentEdges[7] = grid[WINDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[8] = grid[WINDEX(i,(j+1)%POINTS,(k+1)%POINTS,4)];
+  paq->adjacentEdges[9] = grid[WINDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[10] = grid[WINDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,4)];
+  paq->adjacentEdges[11] = grid[WINDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,4)];
 
-  // [GRADIENTS]
-  for(u=0; u<5; u++) {
-    n = 0;
-    for(n=1; n<=3; n++)
-      paq->gradients[n][u] = wderivative(wedge, n, u, i, j, k);
-  }
-  paq->lap = wlapl(wedge, 4, i, j, k);
-
-  // [SOURCES] little j is source, big J is some wonko function of source
-  jsource(paq);
-  Jsource(paq);
-
-  // [DERIVED QUANTITIES]
-  paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
-  paq->srcsum = sumvv(paq->fields, paq->ji);
-  paq->trgrad = sp_tr(paq->gradients);
-  paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
+  // calculate quantities used by evolution functions
+  calculatequantities(paq, i, j, k);
 
   // [EVOLVE WEDGE BASE TO PEAK]
   // energy density
@@ -545,3 +555,35 @@ void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
    wedge[INDEX(3,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*ddtfield_evfn(paq);
 
 }
+
+
+void calculatequantities(PointData *paq, int i, int j, int k)
+{
+  int u, n;
+
+  // [COMMON QUANTITIES]
+  paq->u2 = magu2(paq);
+  paq->ut2 = 1 + paq->u2;
+  paq->ut = sqrt(paq->ut2);
+  paq->relw = (1.0 - W_EOSm1 * paq->u2);
+
+  // [GRADIENTS]
+  for(u=0; u<5; u++) {
+    n = 0;
+    for(n=1; n<=3; n++)
+      paq->gradients[n][u] = derivative(paq, n, u, i, j, k);
+  }
+  paq->lap = lapl(paq, i, j, k);
+
+  // [SOURCES] little j is source, big J is some wonko function of source
+  jsource(paq);
+  Jsource(paq);
+
+  // [DERIVED QUANTITIES]
+  paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
+  paq->srcsum = sumvv(paq->fields, paq->ji);
+  paq->trgrad = sp_tr(paq->gradients);
+  paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
+
+}
+

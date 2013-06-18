@@ -84,43 +84,47 @@ void dumpstate(simType *fields, IOData filedata)
 
 
 /* 
- * Dump a strip of data along an entire axis - output just field data for now.
+ * Dump a strip of data along an axis - output just scalar field values for now.
  */
 void dumpstrip(simType *fields, IOData filedata)
 {
   char *infofile;
   infofile = (char *) malloc(200 * sizeof(char));
-  FILE *datafile;
   strcpy(infofile, filedata.data_dir);
   strcat(infofile, filedata.data_name);
-  strcat(infofile, ".strip.dat");
-  datafile = fopen(infofile, "a+");
+  strcat(infofile, ".strip.dat.gz");
+
+  char *buffer;
+  buffer = (char *) malloc(17 * sizeof(char));
+
+  gzFile *datafile;
+  datafile = (gzFile *)gzopen(infofile, "a+");
   if( datafile == NULL )
-  {
     printf("Error opening file: %s\n", infofile );
-  }
 
   int i;
   for(i=0; i<POINTS; i++)
   {
-    fprintf(datafile, "%f\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
+    sprintf(buffer, "%8.8f\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
+    gzwrite(datafile, buffer, strlen(buffer));
   }
-  fprintf(datafile, "\n");
+  gzwrite(datafile, "\n", strlen("\n")); 
 
-  fclose(datafile);
+  gzclose(datafile);
   free(infofile);
+  free(buffer);
 
   return;
 }
 
 
-// need to write this function.
+/*
+ * Read in hdf5 state.
+ */
 void readstate(simType *fields, IOData filedata)
 {
   char *filename;
   filename = (char *) malloc(100 * sizeof(char));
-
-  /* file data for files */
   strcpy(filename, filedata.data_dir);
   strcat(filename, filedata.read_data_name);
 
@@ -131,7 +135,7 @@ void readstate(simType *fields, IOData filedata)
   file = H5Fopen (filename, H5F_ACC_RDONLY, H5P_DEFAULT);
   dset = H5Dopen2 (file, "DS1", H5P_DEFAULT);
 
-  dcpl = H5Dget_create_plist (dset);
+  dcpl = H5Dget_create_plist(dset);
   status = H5Dread (dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
               fields);
 

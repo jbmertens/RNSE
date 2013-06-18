@@ -25,8 +25,14 @@ else
 	CC_OPTIMIZE = -O3 -std=c99
 endif
 
+# fast math
 ifeq ($(fast), 1)
 	CC_OPTIMIZE += -ffast-math
+endif
+
+# profiling
+ifeq ($(prof), 1)
+	CC_OPTS += -pg
 endif
 
 # Require all object files and then link
