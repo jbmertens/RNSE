@@ -24,12 +24,14 @@ void writeinfo(IOData filedata)
   fprintf(datafile, "# Steps recorded (requires (steps/recorded) to be an integer):\n%d\n",
     STEPS_TO_SAMPLE);
   fprintf(datafile, "# dx/dt (timestep):\n%f\n", dx/dt);
+  fprintf(datafile, "# dx (voxel size):\n%f\n", dx);
   fprintf(datafile, "# Equation of state parameter w:\n%f\n", W_EOS);
   fprintf(datafile, "# Physical lattice dimensions:\n%f\t%f\t%f\n",
     SIZE, SIZE, SIZE);
   fprintf(datafile, "# Maximum number of steps run:\n%d\n", MAX_STEPS);
   fprintf(datafile, "# Initial bubble radius:\n%f\t%f\n",
     R0 /* physical size */, R0/SIZE /* size in pixels */);
+  fprintf(datafile, "# Coupling Constant:\n%f\n", getXI());
 
   fclose(datafile);
   free(infofile);
@@ -105,7 +107,7 @@ void dumpstrip(simType *fields, IOData filedata)
   int i;
   for(i=0; i<POINTS; i++)
   {
-    sprintf(buffer, "%8.8f\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
+    sprintf(buffer, "%8.10f\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
     gzwrite(datafile, buffer, strlen(buffer));
   }
   gzwrite(datafile, "\n", strlen("\n")); 

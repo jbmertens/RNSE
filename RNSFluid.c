@@ -456,7 +456,7 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // Field data near working point
   for(n=0; n<=5; n++)
-    paq->fields[n] = wedge[INDEX(i,j,k,n)];
+    paq->fields[n] = grid[INDEX(i,j,k,n)];
   // adjacent to point (cut cache misses)
   for(n=0; n<=5; n++)
     paq->adjacentFields[0][n] = grid[INDEX((i+1)%POINTS,j,k,n)];
@@ -490,15 +490,15 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // [EVOLVE GRID TO WEDGE BASE]
   // energy density
-   wedge[INDEX(i%3,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*0.5*energy_evfn(paq);
+   wedge[WINDEX(i,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*0.5*energy_evfn(paq);
   // fluid
-   wedge[INDEX(i%3,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*0.5*fluid_evfn(paq, 1);
-   wedge[INDEX(i%3,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*0.5*fluid_evfn(paq, 2);
-   wedge[INDEX(i%3,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*0.5*fluid_evfn(paq, 3);
+   wedge[WINDEX(i,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*0.5*fluid_evfn(paq, 1);
+   wedge[WINDEX(i,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*0.5*fluid_evfn(paq, 2);
+   wedge[WINDEX(i,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*0.5*fluid_evfn(paq, 3);
   // field
-   wedge[INDEX(i%3,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*0.5*field_evfn(paq);
+   wedge[WINDEX(i,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*0.5*field_evfn(paq);
   // field derivative
-   wedge[INDEX(i%3,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*0.5*ddtfield_evfn(paq);
+   wedge[WINDEX(i,j,k,5)] = grid[INDEX(i,j,k,5)] + dt*0.5*ddtfield_evfn(paq);
 
 }
 
@@ -513,31 +513,31 @@ void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
     paq->fields[n] = wedge[WINDEX(i,j,k,n)];
   // adjacent to point (cut cache misses)
   for(n=0; n<=5; n++)
-    paq->adjacentFields[0][n] = grid[WINDEX((i+1)%POINTS,j,k,n)];
+    paq->adjacentFields[0][n] = wedge[WINDEX((i+1)%POINTS,j,k,n)];
   for(n=0; n<=5; n++)
-    paq->adjacentFields[3][n] = grid[WINDEX((i-1+POINTS)%POINTS,j,k,n)];
+    paq->adjacentFields[3][n] = wedge[WINDEX((i-1+POINTS)%POINTS,j,k,n)];
   for(n=0; n<=5; n++)
-    paq->adjacentFields[1][n] = grid[WINDEX(i,(j+1)%POINTS,k,n)];
+    paq->adjacentFields[1][n] = wedge[WINDEX(i,(j+1)%POINTS,k,n)];
   for(n=0; n<=5; n++)
-    paq->adjacentFields[4][n] = grid[WINDEX(i,(j-1+POINTS)%POINTS,k,n)];
+    paq->adjacentFields[4][n] = wedge[WINDEX(i,(j-1+POINTS)%POINTS,k,n)];
   for(n=0; n<=5; n++)
-    paq->adjacentFields[2][n] = grid[WINDEX(i,j,(k+1)%POINTS,n)];
+    paq->adjacentFields[2][n] = wedge[WINDEX(i,j,(k+1)%POINTS,n)];
   for(n=0; n<=5; n++)
-    paq->adjacentFields[5][n] = grid[WINDEX(i,j,(k-1+POINTS)%POINTS,n)];
+    paq->adjacentFields[5][n] = wedge[WINDEX(i,j,(k-1+POINTS)%POINTS,n)];
 
   // Around edges (for laplacian; field values only)
-  paq->adjacentEdges[0] = grid[WINDEX((i+1)%POINTS,(j+1)%POINTS,k,4)];
-  paq->adjacentEdges[1] = grid[WINDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,4)];
-  paq->adjacentEdges[2] = grid[WINDEX((i+1)%POINTS,j,(k+1)%POINTS,4)];
-  paq->adjacentEdges[3] = grid[WINDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,4)];
-  paq->adjacentEdges[4] = grid[WINDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,4)];
-  paq->adjacentEdges[5] = grid[WINDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,4)];
-  paq->adjacentEdges[6] = grid[WINDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,4)];
-  paq->adjacentEdges[7] = grid[WINDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,4)];
-  paq->adjacentEdges[8] = grid[WINDEX(i,(j+1)%POINTS,(k+1)%POINTS,4)];
-  paq->adjacentEdges[9] = grid[WINDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,4)];
-  paq->adjacentEdges[10] = grid[WINDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,4)];
-  paq->adjacentEdges[11] = grid[WINDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[0] = wedge[WINDEX((i+1)%POINTS,(j+1)%POINTS,k,4)];
+  paq->adjacentEdges[1] = wedge[WINDEX((i+1)%POINTS,(j-1+POINTS)%POINTS,k,4)];
+  paq->adjacentEdges[2] = wedge[WINDEX((i+1)%POINTS,j,(k+1)%POINTS,4)];
+  paq->adjacentEdges[3] = wedge[WINDEX((i+1)%POINTS,j,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[4] = wedge[WINDEX((i-1+POINTS)%POINTS,(j+1)%POINTS,k,4)];
+  paq->adjacentEdges[5] = wedge[WINDEX((i-1+POINTS)%POINTS,(j-1+POINTS)%POINTS,k,4)];
+  paq->adjacentEdges[6] = wedge[WINDEX((i-1+POINTS)%POINTS,j,(k+1)%POINTS,4)];
+  paq->adjacentEdges[7] = wedge[WINDEX((i-1+POINTS)%POINTS,j,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[8] = wedge[WINDEX(i,(j+1)%POINTS,(k+1)%POINTS,4)];
+  paq->adjacentEdges[9] = wedge[WINDEX(i,(j+1)%POINTS,(k-1+POINTS)%POINTS,4)];
+  paq->adjacentEdges[10] = wedge[WINDEX(i,(j-1+POINTS)%POINTS,(k+1)%POINTS,4)];
+  paq->adjacentEdges[11] = wedge[WINDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,4)];
 
   // calculate quantities used by evolution functions
   calculatequantities(paq, i, j, k);
