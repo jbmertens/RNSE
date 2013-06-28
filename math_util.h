@@ -162,7 +162,7 @@ static inline simType sp_tr(simType t1[4][DOF])
 static inline simType dV(simType phi)
 {
   // return 0;
-  return LAMBDA/2*(phi*phi - ETA*ETA)*phi + EPSILON*LAMBDA*ETA*ETA*ETA;
+  return phi*(1.0 + 3.0/2.0*phi + ALPHA/2.0*phi);
 }
 
 

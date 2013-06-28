@@ -97,7 +97,7 @@ void dumpstrip(simType *fields, IOData filedata)
   strcat(infofile, ".strip.dat.gz");
 
   char *buffer;
-  buffer = (char *) malloc(17 * sizeof(char));
+  buffer = (char *) malloc(30 * sizeof(char));
 
   gzFile *datafile;
   datafile = (gzFile *)gzopen(infofile, "a+");

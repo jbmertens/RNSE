@@ -17,10 +17,8 @@
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
    are changed! */
-#define LAMBDA      0.01    /* potential height */
-#define ETA         1.0     /* potential min position */
-#define EPSILON     0.025   /* potential asymmetry */
-#define R0          (1 / EPSILON / ETA / sqrt(LAMBDA))
+#define ALPHA      0.9    /* potential height */
+#define R0         (1.0/(1.0-ALPHA))
 
 #define W_EOS       (1.0 / 3.0)   /* EOS parameter */
 #define W_EOSm1     (W_EOS - 1.0)
@@ -33,7 +31,7 @@
 #define SIZE    (6*R0)                         /* physical size in space */
 #define POINTS  ((long long) 100)              /* number of points on
                                                   lattice (each axis) */
-#define dx      ( 1.0*SIZE / (1.0*POINTS) )
+#define dx      (1.0 * SIZE / 1.0 / POINTS)
 #define dt      (dx/10.0)
 
 /* storage parameters */
@@ -56,6 +54,7 @@
                                    If the field value in this cell becomes negative,
                                    the simulation should stop running.
                                    Use negative value for no stop. */
+#define STOP_MAX            ((-3.0 + sqrt(9.0 - 8.0*ALPHA))/2/ALPHA)
 #define DUMP_STRIP 1            /* bool - full dump of a strip along the center of
                                    the simulation at each step? */
 
