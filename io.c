@@ -90,30 +90,32 @@ void dumpstate(simType *fields, IOData filedata)
  */
 void dumpstrip(simType *fields, IOData filedata)
 {
-  char *infofile;
-  infofile = (char *) malloc(200 * sizeof(char));
-  strcpy(infofile, filedata.data_dir);
-  strcat(infofile, filedata.data_name);
-  strcat(infofile, ".strip.dat.gz");
+  char *filename;
+  filename = malloc(200 * sizeof(*filename));
+  strcpy(filename, filedata.data_dir);
+  strcat(filename, filedata.data_name);
+  strcat(filename, ".strip.dat.gz");
 
   char *buffer;
-  buffer = (char *) malloc(30 * sizeof(char));
+  buffer = malloc(20 * sizeof(*buffer));
 
   gzFile *datafile;
-  datafile = (gzFile *)gzopen(infofile, "a+");
-  if( datafile == NULL )
-    printf("Error opening file: %s\n", infofile );
+  datafile = (gzFile *)gzopen(filename, "ab");
+  if(datafile == Z_NULL) {
+    printf("Error opening file: %s\n", filename);
+    return;
+  }
 
   int i;
   for(i=0; i<POINTS; i++)
   {
-    sprintf(buffer, "%8.10f\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
+    sprintf(buffer, "%g\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
     gzwrite(datafile, buffer, strlen(buffer));
-  }
+  }  
   gzwrite(datafile, "\n", strlen("\n")); 
 
   gzclose(datafile);
-  free(infofile);
+  free(filename);
   free(buffer);
 
   return;

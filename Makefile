@@ -20,7 +20,7 @@ endif
 
 # enable debug mode
 ifeq ($(debug), 1)
-	CC_OPTIMIZE = -O0 -g -Wall -DDEBUG -std=c99
+	CC_OPTIMIZE = -O0 -g -Wall -DDEBUG -ggdb -std=c99
 else
 	CC_OPTIMIZE = -O3 -std=c99
 endif

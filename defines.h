@@ -17,7 +17,7 @@
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
    are changed! */
-#define ALPHA      0.9    /* potential height */
+#define ALPHA      0.92    /* potential height */
 #define R0         (1.0/(1.0-ALPHA))
 
 #define W_EOS       (1.0 / 3.0)   /* EOS parameter */

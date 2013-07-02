@@ -224,11 +224,12 @@ int main(int argc, char **argv)
  */
 
     // initial wedge base (centered on i=0)
-      for(i=POINTS-1; i<=POINTS+1; i++) {
-        // populate wedge
-        #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
-        LOOP2(j,k)
-          g2wevolve(fields, wedge, &paq, i, j, k);
+      // populate wedge
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      LOOP2(j,k) {
+        g2wevolve(fields, wedge, &paq, POINTS-1, j, k);
+        g2wevolve(fields, wedge, &paq, POINTS, j, k);
+        g2wevolve(fields, wedge, &paq, POINTS+1, j, k);
       }
 
     // build afterimage
