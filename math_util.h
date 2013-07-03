@@ -93,7 +93,7 @@ static inline simType lapl(PointData *paq, int i, int j, int k)
     )
     + 2.0*(
       // Center-differences
-      paq->adjacentFields[0][4] + paq->adjacentFields[2][4] + paq->adjacentFields[3][4]
+      paq->adjacentFields[0][4] + paq->adjacentFields[1][4] + paq->adjacentFields[2][4]
       + paq->adjacentFields[3][4] + paq->adjacentFields[4][4] + paq->adjacentFields[5][4]
     )
     - 24.0*(
@@ -162,7 +162,7 @@ static inline simType sp_tr(simType t1[4][DOF])
 static inline simType dV(simType phi)
 {
   // return 0;
-  return phi*(1.0 + 3.0/2.0*phi + ALPHA/2.0*phi);
+  return phi + phi*(3.0/2.0*phi + ALPHA/2.0*phi*phi);
 }
 
 
