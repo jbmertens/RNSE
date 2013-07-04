@@ -27,6 +27,7 @@ static inline simType dV(simType phi);
 static inline void convolve(simType *data, simType *temp, simType coeff);
 
 
+
 /* 
  * U^2 - commonly used quantity, stored so we only need to use it once.
  */
@@ -162,7 +163,7 @@ static inline simType sp_tr(simType t1[4][DOF])
 static inline simType dV(simType phi)
 {
   // return 0;
-  return phi + phi*(3.0/2.0*phi + ALPHA/2.0*phi*phi);
+  return phi + phi*(3.0/2.0*phi + getALPHA()/2.0*phi*phi);
 }
 
 

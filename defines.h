@@ -17,8 +17,7 @@
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
    are changed! */
-#define ALPHA      0.92    /* potential height */
-#define R0         (1.0/(1.0-ALPHA))
+#define R0         (1.0/(1.0-getALPHA()))
 
 #define W_EOS       (1.0 / 3.0)   /* EOS parameter */
 #define W_EOSm1     (W_EOS - 1.0)
@@ -28,11 +27,11 @@
 #define DOF ((long long) 6)  
 
 /* resolution parameters */
-#define SIZE    (6*R0)                         /* physical size in space */
-#define POINTS  ((long long) 100)              /* number of points on
+#define SIZE    (7*R0)                         /* physical size in space */
+#define POINTS  ((long long) 200)              /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/20.0)
+#define dt      (dx/15.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
@@ -42,7 +41,7 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           100             /* Maximum # of steps to run */
+#define MAX_STEPS           200             /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to
@@ -54,7 +53,7 @@
                                    If the field value in this cell becomes negative,
                                    the simulation should stop running.
                                    Use negative value for no stop. */
-#define STOP_MAX            ((-3.0 + sqrt(9.0 - 8.0*ALPHA))/2/ALPHA)
+#define STOP_MAX            ((-3.0 + sqrt(9.0 - 8.0*getALPHA()))/2/getALPHA())
 #define DUMP_STRIP 1            /* bool - full dump of a strip along the center of
                                    the simulation at each step? */
 

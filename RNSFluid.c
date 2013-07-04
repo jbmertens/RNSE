@@ -151,7 +151,7 @@ int main(int argc, char **argv)
           // scalar field
           // spherically symmetric soliton/"bubble" solution - first order
           // approximation in vacuum energy difference
-          fields[INDEX(i,j,k,4)] = (3.0 + sqrt(9.0 - 8.0*ALPHA))/4.0/ALPHA
+          fields[INDEX(i,j,k,4)] = (3.0 + sqrt(9.0 - 8.0*getALPHA()))/4.0/getALPHA()
             *(
               tanh(1.0/2.0*(
                 sqrt(

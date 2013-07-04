@@ -13,6 +13,7 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int k);
 void calculatequantities(PointData *paq, int i, int j, int k);
 
+
 /* Deal with fluid coupling. */
 static inline simType getXI();
 static inline void setXI(simType xi);
@@ -27,5 +28,23 @@ static inline simType getXI()
 {
     return XI;
 }
+
+
+/* Deal with potential parameter. */
+static inline simType getALPHA();
+static inline void setALPHA(simType alpha);
+static simType ALPHA = 0.90;
+
+/* get/set potential parameter. */
+static inline void setALPHA(simType alpha)
+{
+    ALPHA = alpha;
+}
+static inline simType getALPHA()
+{
+    return ALPHA;
+}
+
+
 
 #endif

@@ -127,27 +127,47 @@ void dumpstrip(simType *fields, IOData filedata)
  */
 void readstate(simType *fields, IOData filedata)
 {
-  char *filename;
-  filename = (char *) malloc(100 * sizeof(char));
-  strcpy(filename, filedata.data_dir);
-  strcat(filename, filedata.read_data_name);
 
   hid_t           file, dset, dcpl;    /* Handles */
   herr_t          status;
-  unsigned int    flags, filter_info;
+  htri_t          avail;
+  H5Z_filter_t    filter_type;
 
-  file = H5Fopen (filename, H5F_ACC_RDONLY, H5P_DEFAULT);
-  dset = H5Dopen2 (file, "DS1", H5P_DEFAULT);
+  size_t          nelmts;
+  unsigned int    flags,
+                  filter_info;
+  int             i, j;
 
+  simType         min;
+
+  /*
+   * Open file and dataset using the default properties.
+   */
+  printf("Attempting to open file: %s\n", filedata.read_data_name);
+
+  file = H5Fopen(filedata.read_data_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+  dset = H5Dopen2(file, "Dataset1", H5P_DEFAULT);
   dcpl = H5Dget_create_plist(dset);
-  status = H5Dread (dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-              fields);
 
+  /*
+   * Read data in and find the maximum value in the dataset, to
+   * verify that it was read correctly.
+   */
+  status = H5Dread (dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, fields);
+  printf ("Status after reading is: %d\n", status);
+
+  min = fields[0];
+  for(i=0; i<POINTS*POINTS*POINTS*DOF; i++)
+      if(min > fields[i])
+        min = fields[i];
+  printf ("Minimum value is: %5.5f\n", min);
+
+  /*
+   * Close and release resources.
+   */
   status = H5Pclose (dcpl);
   status = H5Dclose (dset);
   status = H5Fclose (file);
-
-  free(filename);
 
   return;
 }
