@@ -27,11 +27,12 @@ int main(int argc, char **argv)
       {"output-file",   required_argument, 0, 'f'},
       {"initial-file",  required_argument, 0, 'i'},
       {"num-threads",   required_argument, 0, 't'},
+      {"alpha",         required_argument, 0, 'a'},
       {"num-threads",   no_argument,       0, 'h'}
     };
     
     int option_index = 0;
-    c = getopt_long(argc, argv, "c:o:f:i:t:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "c:o:f:i:t:a:h", long_options, &option_index);
     if(c == -1) // stop if done reading arguments
       break;
 
@@ -53,9 +54,13 @@ int main(int argc, char **argv)
       case 't':
         threads = atof(optarg);
         break;
+      case 'a':
+        setALPHA(atof(optarg));
+        break;
       case 'h':
       case '?':
         fprintf(stderr, "usage: %s -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads\n", argv[0]);
+        abort();
       default:
         abort();
     }
@@ -103,16 +108,26 @@ int main(int argc, char **argv)
     T_DUMPINT = (int) floor( (simType)MAX_STEPS / (simType)STEPS_TO_DUMP );
   }
 
-  /* print out sampling information */
+  /* print out simulation information */
   printf("\nStarting simulation.  Storing data in %s\n", filedata.data_dir);
-  printf("Will be sampling every %i steps (recording about %i of %i steps).\n",
-    T_SAMPLEINT, MAX_STEPS/(T_SAMPLEINT+1), MAX_STEPS);
-  printf("Full dump output every %i steps (recording about %i of %i steps).\n",
-    T_DUMPINT, MAX_STEPS/(T_DUMPINT+1), MAX_STEPS);
-  printf("Writing %i along x-axis (sample every %i points on all axes).\n",
-    POINTS_TO_SAMPLE, X_SAMPLEINT);
-  printf("Setting w=%1.2f, R_0=%1.2f, (~%1.2f voxels from edge).\n\n",
-    W_EOS, R0, POINTS/2-R0/dx);
+  if(T_SAMPLEINT < MAX_STEPS) {
+    printf("Will be sampling every %i steps (recording about %i of %i steps).\n",
+      T_SAMPLEINT, MAX_STEPS/(T_SAMPLEINT+1), MAX_STEPS);
+    printf(" - writing %i along x-axis (sample every %i points on all axes).\n",
+      POINTS_TO_SAMPLE, X_SAMPLEINT);
+  } else {
+    printf("Will not be outputting grid snapshots.");
+  }
+  if(T_DUMPINT < MAX_STEPS) {
+    printf("Full dump output every %i steps (recording about %i of %i steps).\n",
+      T_DUMPINT, MAX_STEPS/(T_DUMPINT+1), MAX_STEPS);
+  } else {
+    printf("Will not be outputting full grid dumps except at end.\n"); 
+  }
+  printf("Parameter values: alpha=%1.2f, xi=%1.4f, w=%1.2f, R_0=%1.2f.\n",
+    getALPHA(), getXI(), W_EOS, R0);
+  printf("Simulation information: size=%d*R_0, points=%d, dx=%1.3f, dt/dx=%1.3f.\n\n",
+    ((int) (SIZE/R0)), ((int) POINTS), dx, dt/dx);
 
   /* also write this information to file */
   writeinfo(filedata);
@@ -136,6 +151,7 @@ int main(int argc, char **argv)
   if(0 == read_initial_step)
   {
     /* initialize data in static bubble configuration */
+    printf("Initializing bubble configuration using thin-wall approximation.\n");
     for(i=0; i<POINTS; i++)
       for(j=0; j<POINTS; j++)
         for(k=0; k<POINTS; k++)
