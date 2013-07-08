@@ -342,7 +342,7 @@ int main(int argc, char **argv)
  */
 void jsource(PointData *paq)
 {
-  simType coup = getXI() * (
+  simType coup = -1.0*getXI() * (
           paq->ut * paq->fields[5]
           + sumvt(paq->fields, paq->gradients, 1, 4)
         );
@@ -433,7 +433,7 @@ static inline simType field_evfn(PointData *paq)
 static inline simType ddtfield_evfn(PointData *paq)
 {
   return (
-    paq->lap - getXI() * (
+    paq->lap + getXI() * (
       paq->ut * paq->fields[5]
       + sumvt(paq->fields, paq->gradients, 1, 4)
     ) - dV(paq->fields[4])

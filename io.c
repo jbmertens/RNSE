@@ -109,7 +109,14 @@ void dumpstrip(simType *fields, IOData filedata)
   int i;
   for(i=0; i<POINTS; i++)
   {
+    // field values
     sprintf(buffer, "%g\t", fields[INDEX(i,POINTS/2,POINTS/2,4)]);
+    gzwrite(datafile, buffer, strlen(buffer));
+    // fluid velocity in direction of slice
+    sprintf(buffer, "%g\t", fields[INDEX(i,POINTS/2,POINTS/2,1)]);
+    gzwrite(datafile, buffer, strlen(buffer));
+    // energy density
+    sprintf(buffer, "%g\t", fields[INDEX(i,POINTS/2,POINTS/2,0)]);
     gzwrite(datafile, buffer, strlen(buffer));
   }  
   gzwrite(datafile, "\n", strlen("\n")); 

@@ -28,10 +28,10 @@
 
 /* resolution parameters */
 #define SIZE    (10*R0)                         /* physical size in space */
-#define POINTS  ((long long) 100)              /* number of points on
+#define POINTS  ((long long) 128)              /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/25.0)
+#define dt      (dx/40.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
