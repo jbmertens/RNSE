@@ -137,12 +137,14 @@ int main(int argc, char **argv)
   PointData paq;
 
   /* Fluid/field storage space for data on 3 dimensional grid. */
-  simType *fields, *wedge, *after;
+  simType *fields, *wedge, *after, *transfer;
   // actual grid
   fields     = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
   // For the "wedge", R^2 storage locations are needed.
   // wedge[i=0-2] are 'base', wedge[i=3] is 'peak'
   wedge      = (simType *) malloc(AREA_STORAGE * METHOD_ORDER * METHOD_ORDER * ((long long) sizeof(simType)));
+  // Overhead from transfering wedge values back to grid
+  transfer   = (simType *) malloc(AREA_STORAGE * ((long long) sizeof(simType)));
   // Initial values calculated in the wedge can't be stored until it's come back and finished calculating
   // Basically, a 'snapshot' of the first two peaks - call this the 'afterimage'.
   after = (simType *) malloc(AREA_STORAGE * 2 * METHOD_ORDER * ((long long) sizeof(simType)));
@@ -283,7 +285,7 @@ int main(int argc, char **argv)
       }
 
     // Move along, move along home
-    for(i=4; i<=POINTS; i++) // i is position of leading wedge base point; i-1 is position of peak
+    for(i=4; i<=POINTS; i++) // i is position of leading wedge base point; i-1 is position of new peak
     {
       
       // roll base along
@@ -291,16 +293,17 @@ int main(int argc, char **argv)
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, i, j, k);
 
-      // grid <- peak <- base
+      // store old peak back in the grid
       #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
-      {
         for(u=0; u<DOF; u++)
-        {
           fields[INDEX(i-2,j,k,u)] = wedge[INDEX(3,j,k,u)];
-        }
+
+      // calculate new wedge peak
+      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      LOOP2(j,k)
         w2pevolve(fields, wedge, &paq, i-1, j, k);
-      }
+
     }
 
     // Done; store the afterimage in the fields.
@@ -361,17 +364,15 @@ void jsource(PointData *paq)
  * "source" calculations - compute modified fluid source term, for repeated use.
  */
 void Jsource(PointData *paq)
-{   
-  simType sum_spatial = paq->srcsum;
-  simType sum_covariant = sum_spatial + paq->ut * paq->ji[0];
-  simType eos_factor = 1.0 + W_EOS;
+{
+  simType sum_covariant = paq->srcsum + paq->ut * paq->ji[0];
   simType source_factor = sum_covariant +
-    W_EOS / paq->relw * (sum_spatial / eos_factor + paq->u2 * sum_covariant);
+    W_EOS / paq->relw * (paq->srcsum / W_EOSp1 + paq->u2 * sum_covariant);
 
   int i;
   for(i=1; i<=3; i++) {
     paq->Ji[i] = (
-        paq->ji[i] / eos_factor
+        paq->ji[i] / W_EOSp1
         + paq->fields[i] * source_factor
       ) / exp(paq->fields[0]) / paq->ut;
   }
@@ -387,9 +388,9 @@ static inline simType energy_evfn(PointData *paq)
 {
   return (
     - W_EOSp1 * paq->ut / paq->relw * (
-      -W_EOSm1 / W_EOSp1 * paq->udu
+      - W_EOSm1 / W_EOSp1 * paq->ude
       + paq->trgrad
-      - paq->uudu / paq->ut2
+      + paq->uudu / paq->ut2
     )
     - W_EOSp1 / paq->ut2 * sumvv(paq->fields, paq->Ji)
     - (paq->ut * paq->ji[0] + paq->srcsum) / exp(paq->fields[0]) / paq->ut
@@ -406,7 +407,7 @@ static inline simType fluid_evfn(PointData *paq, int u)
     W_EOS * paq->ut * paq->fields[u] / paq->relw * (
         paq->trgrad
         - (
-          W_EOS * paq->udu / W_EOSp1
+          W_EOS * paq->ude / W_EOSp1
           + paq->uudu
         ) / paq->ut2
       )
@@ -433,7 +434,7 @@ static inline simType field_evfn(PointData *paq)
 static inline simType ddtfield_evfn(PointData *paq)
 {
   return (
-    paq->lap + getXI() * (
+    paq->lap - getXI() * (
       paq->ut * paq->fields[5]
       + sumvt(paq->fields, paq->gradients, 1, 4)
     ) - dV(paq->fields[4])
@@ -458,21 +459,21 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
   int n;
 
   // Field data near working point
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->fields[n] = grid[INDEX(i,j,k,n)];
-  // adjacent to point (cut cache misses)
-  for(n=0; n<=5; n++)
+  // move values from heap to stack (cut cache misses)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[0][n] = grid[INDEX((i+1)%POINTS,j,k,n)];
-  for(n=0; n<=5; n++)
-    paq->adjacentFields[3][n] = grid[INDEX((i-1+POINTS)%POINTS,j,k,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
+    paq->adjacentFields[3][n] = grid[INDEX((i+POINTS-1)%POINTS,j,k,n)];
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[1][n] = grid[INDEX(i,(j+1)%POINTS,k,n)];
-  for(n=0; n<=5; n++)
-    paq->adjacentFields[4][n] = grid[INDEX(i,(j-1+POINTS)%POINTS,k,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
+    paq->adjacentFields[4][n] = grid[INDEX(i,(j+POINTS-1)%POINTS,k,n)];
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[2][n] = grid[INDEX(i,j,(k+1)%POINTS,n)];
-  for(n=0; n<=5; n++)
-    paq->adjacentFields[5][n] = grid[INDEX(i,j,(k-1+POINTS)%POINTS,n)];
+  for(n=0; n<DOF; n++)
+    paq->adjacentFields[5][n] = grid[INDEX(i,j,(k+POINTS-1)%POINTS,n)];
 
   // Around edges (for laplacian; field values only)
   paq->adjacentEdges[0] = grid[INDEX((i+1)%POINTS,(j+1)%POINTS,k,4)];
@@ -489,7 +490,7 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
   paq->adjacentEdges[11] = grid[INDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,4)];
 
   // calculate quantities used by evolution functions
-  calculatequantities(paq, i, j, k);
+  calculatequantities(paq);
 
   // [EVOLVE GRID TO WEDGE BASE]
   // energy density
@@ -512,20 +513,20 @@ void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
   int n;
 
   // Field data near working point
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->fields[n] = wedge[WINDEX(i,j,k,n)];
   // adjacent to point (cut cache misses)
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[0][n] = wedge[WINDEX((i+1)%POINTS,j,k,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[3][n] = wedge[WINDEX((i-1+POINTS)%POINTS,j,k,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[1][n] = wedge[WINDEX(i,(j+1)%POINTS,k,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[4][n] = wedge[WINDEX(i,(j-1+POINTS)%POINTS,k,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[2][n] = wedge[WINDEX(i,j,(k+1)%POINTS,n)];
-  for(n=0; n<=5; n++)
+  for(n=0; n<DOF; n++)
     paq->adjacentFields[5][n] = wedge[WINDEX(i,j,(k-1+POINTS)%POINTS,n)];
 
   // Around edges (for laplacian; field values only)
@@ -543,7 +544,7 @@ void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
   paq->adjacentEdges[11] = wedge[WINDEX(i,(j-1+POINTS)%POINTS,(k-1+POINTS)%POINTS,4)];
 
   // calculate quantities used by evolution functions
-  calculatequantities(paq, i, j, k);
+  calculatequantities(paq);
 
   // [EVOLVE WEDGE BASE TO PEAK]
   // energy density
@@ -560,7 +561,7 @@ void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 }
 
 
-void calculatequantities(PointData *paq, int i, int j, int k)
+void calculatequantities(PointData *paq)
 {
   int u, n;
 
@@ -572,11 +573,10 @@ void calculatequantities(PointData *paq, int i, int j, int k)
 
   // [GRADIENTS]
   for(u=0; u<5; u++) {
-    n = 0;
     for(n=1; n<=3; n++)
-      paq->gradients[n][u] = derivative(paq, n, u, i, j, k);
+      paq->gradients[n][u] = derivative(paq, n, u);
   }
-  paq->lap = lapl(paq, i, j, k);
+  paq->lap = lapl(paq);
 
   // [SOURCES] little j is source, big J is some wonko function of source
   jsource(paq);
@@ -586,7 +586,6 @@ void calculatequantities(PointData *paq, int i, int j, int k)
   paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
   paq->srcsum = sumvv(paq->fields, paq->ji);
   paq->trgrad = sp_tr(paq->gradients);
-  paq->udu = sumvt(paq->fields, paq->gradients, 1, 0);
+  paq->ude = sumvt(paq->fields, paq->gradients, 1, 0);
 
 }
-

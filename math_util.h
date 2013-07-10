@@ -17,15 +17,14 @@ static inline simType sumvt(simType v1[4], simType t1[4][DOF], int rc, int s);
 static inline simType sumvtv(simType v1[4], simType t1[4][DOF], simType v2[4]);
 static inline simType sp_tr(simType t1[4][DOF]);
 
-static inline simType derivative(PointData *paq, int ddim, int dim, int i, int j, int k);
-static inline simType lapl(PointData *paq, int i, int j, int k);
+static inline simType derivative(PointData *paq, int ddim, int dim);
+static inline simType lapl(PointData *paq);
 
 /* potential function */
 static inline simType dV(simType phi);
 
 /* Data convolution - generic smoothing to reduce Gibbs oscillations */
 static inline void convolve(simType *data, simType *temp, simType coeff);
-
 
 
 /* 
@@ -61,7 +60,7 @@ static inline simType Ut(PointData *paq)
  * Taking derivatives.  Assumes toroidial boundary conditions in each direction.
  * On the wedge base here, so derivative can only be taken at points 'inside' the base.
  */
-static inline simType derivative(PointData *paq, int ddim /* direction of derivative */, int dim, int i, int j, int k)
+static inline simType derivative(PointData *paq, int ddim /* direction of derivative */, int dim)
 {
   /* taking modulo here for each point */
   switch(ddim)
@@ -83,7 +82,7 @@ static inline simType derivative(PointData *paq, int ddim /* direction of deriva
  * Taking second derivatives - only of the field.  Again, assumes toroidial boundary conditions in each direction.
  * Bit higher order scheme here than just taking 2nd derivatives.
  */
-static inline simType lapl(PointData *paq, int i, int j, int k)
+static inline simType lapl(PointData *paq)
 {
   return (
     (

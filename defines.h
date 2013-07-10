@@ -31,7 +31,7 @@
 #define POINTS  ((long long) 128)              /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/40.0)
+#define dt      (dx/25.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
@@ -99,7 +99,7 @@ typedef struct {
   simType uudu;
   simType srcsum;
   simType trgrad;
-  simType udu;
+  simType ude;
 
   /* S^{TT}_{ij}
     Gauge choices and coordinate choices allow us to only calculate two components.
