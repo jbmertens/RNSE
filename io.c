@@ -92,7 +92,6 @@ void dumpstrip(simType *fields, IOData filedata)
 {
   int i;
 
-
   // x-axis data
   char *filename, *buffer;
   gzFile *datafile;
@@ -100,7 +99,7 @@ void dumpstrip(simType *fields, IOData filedata)
   filename = malloc(200 * sizeof(*filename));
   strcpy(filename, filedata.data_dir);
   strcat(filename, filedata.data_name);
-  strcat(filename, "-x.strip.dat.gz");
+  strcat(filename,  ".strip.dat.gz");
   buffer = malloc(20 * sizeof(*buffer));
 
   datafile = (gzFile *)gzopen(filename, "ab");
@@ -122,63 +121,7 @@ void dumpstrip(simType *fields, IOData filedata)
     gzwrite(datafile, buffer, strlen(buffer));
   }  
   gzwrite(datafile, "\n", strlen("\n")); 
-  gzclose(datafile);
-
-  // y-axis data
-  filename = malloc(200 * sizeof(*filename));
-  strcpy(filename, filedata.data_dir);
-  strcat(filename, filedata.data_name);
-  strcat(filename, "-y.strip.dat.gz");
-  buffer = malloc(20 * sizeof(*buffer));
-
-  datafile = (gzFile *)gzopen(filename, "ab");
-  if(datafile == Z_NULL) {
-    printf("Error opening file: %s\n", filename);
-    return;
-  }
-
-  for(i=0; i<POINTS; i++)
-  {
-    // field values
-    sprintf(buffer, "%g\t", fields[INDEX(POINTS/2,i,POINTS/2,4)]);
-    gzwrite(datafile, buffer, strlen(buffer));
-    // fluid velocity in direction of slice
-    sprintf(buffer, "%g\t", fields[INDEX(POINTS/2,i,POINTS/2,2)]);
-    gzwrite(datafile, buffer, strlen(buffer));
-    // energy density
-    sprintf(buffer, "%g\t", fields[INDEX(POINTS/2,i,POINTS/2,0)]);
-    gzwrite(datafile, buffer, strlen(buffer));
-  }
-  gzwrite(datafile, "\n", strlen("\n"));
-  gzclose(datafile);
-
-  // z-axis data
-  filename = malloc(200 * sizeof(*filename));
-  strcpy(filename, filedata.data_dir);
-  strcat(filename, filedata.data_name);
-  strcat(filename, "-z.strip.dat.gz");
-  buffer = malloc(20 * sizeof(*buffer));
-
-  datafile = (gzFile *)gzopen(filename, "ab");
-  if(datafile == Z_NULL) {
-    printf("Error opening file: %s\n", filename);
-    return;
-  }
-
-  for(i=0; i<POINTS; i++)
-  {
-    // field values
-    sprintf(buffer, "%g\t", fields[INDEX(POINTS/2,POINTS/2,i,4)]);
-    gzwrite(datafile, buffer, strlen(buffer));
-    // fluid velocity in direction of slice
-    sprintf(buffer, "%g\t", fields[INDEX(POINTS/2,POINTS/2,i,3)]);
-    gzwrite(datafile, buffer, strlen(buffer));
-    // energy density
-    sprintf(buffer, "%g\t", fields[INDEX(POINTS/2,POINTS/2,i,0)]);
-    gzwrite(datafile, buffer, strlen(buffer));
-  }
-  gzwrite(datafile, "\n", strlen("\n"));
-
+ 
   gzclose(datafile);
   free(filename);
   free(buffer);

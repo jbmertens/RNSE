@@ -25,7 +25,7 @@ int main(int argc, char **argv)
       {"coupling",      required_argument, 0, 'c'},
       {"output-dir",    required_argument, 0, 'o'},
       {"output-file",   required_argument, 0, 'f'},
-      {"initial-file",  required_argument, 0, 'i'},
+      {"input-file",    required_argument, 0, 'i'},
       {"num-threads",   required_argument, 0, 't'},
       {"alpha",         required_argument, 0, 'a'},
       {"num-threads",   no_argument,       0, 'h'}
@@ -59,10 +59,11 @@ int main(int argc, char **argv)
         break;
       case 'h':
       case '?':
-        fprintf(stderr, "usage: %s -c coupling_xi -o output_dir -f output_filename -i initial_configuration -t num_threads\n", argv[0]);
-        abort();
+        fprintf(stderr, "usage: %s -c coupling -o output-dir -f output-file -i input-file -t num-threads -a alpha\n", argv[0]);
+        fprintf(stderr, "All options are optional; if not specified defaults will be used.\n");
+        return 0;
       default:
-        abort();
+        return 0;
     }
   }
 
@@ -116,7 +117,7 @@ int main(int argc, char **argv)
     printf(" - writing %i along x-axis (sample every %i points on all axes).\n",
       POINTS_TO_SAMPLE, X_SAMPLEINT);
   } else {
-    printf("Will not be outputting grid snapshots.");
+    printf("Will not be outputting grid snapshots.\n");
   }
   if(T_DUMPINT < MAX_STEPS) {
     printf("Full dump output every %i steps (recording about %i of %i steps).\n",
@@ -148,7 +149,6 @@ int main(int argc, char **argv)
   // Initial values calculated in the wedge can't be stored until it's come back and finished calculating
   // Basically, a 'snapshot' of the first two peaks - call this the 'afterimage'.
   after = (simType *) malloc(AREA_STORAGE * 2 * METHOD_ORDER * ((long long) sizeof(simType)));
-
 
   if(0 == read_initial_step)
   {
