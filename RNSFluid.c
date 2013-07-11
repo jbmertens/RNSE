@@ -567,7 +567,7 @@ void calculatequantities(PointData *paq)
 
   // [COMMON QUANTITIES]
   paq->u2 = magu2(paq);
-  paq->ut2 = 1 + paq->u2;
+  paq->ut2 = 1.0 + paq->u2;
   paq->ut = sqrt(paq->ut2);
   paq->relw = (1.0 - W_EOSm1 * paq->u2);
 
@@ -580,11 +580,11 @@ void calculatequantities(PointData *paq)
 
   // [SOURCES] little j is source, big J is some wonko function of source
   jsource(paq);
-  Jsource(paq);
+  paq->srcsum = sumvv(paq->fields, paq->ji);
+  Jsource(paq); // depends on having paq->srcsum calculated correctly
 
   // [DERIVED QUANTITIES]
   paq->uudu = sumvtv(paq->fields, paq->gradients, paq->fields);
-  paq->srcsum = sumvv(paq->fields, paq->ji);
   paq->trgrad = sp_tr(paq->gradients);
   paq->ude = sumvt(paq->fields, paq->gradients, 1, 0);
 
