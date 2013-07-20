@@ -61,13 +61,10 @@ bubblefn =
         2 ;;]]}]]]];
 If[simsize > 2 3^(1/2) xmax, Print["simsize is too big!"], (
    b = {-simsize/2, simsize/2, simsize/(simpoints-1)};
-   data = Table[{
-      Log[0.1], (* energy density *)
-      0., 0., 0., (* Initial fluid velocity *)
-      bubblefn[Sqrt[x^2 + y^2 + z^2]], (* field  *)
-      0. (* field derivative *)
-      }, {x, b[[1]], b[[2]], b[[3]]}, {y, b[[1]], b[[2]], b[[3]]}, {z,
-       b[[1]], b[[2]], b[[3]]}];
+   data = Table[
+          bubblefn[Sqrt[x^2. + y^2. + z^2.]],
+          {x, b[[1]], b[[2]], b[[3]]}, {y, b[[1]], b[[2]], b[[3]]}, {z, b[[1]], b[[2]], b[[3]]}
+        ];
    )];
 Export["INITIAL_a-" <> ToString[N[\[Alpha], 2]] <> "_SIZE-" <> 
    ToString[Round[simsize/R0]] <> "R0_POINTS-"<>ToString[simpoints]<>".h5", data];

@@ -24,8 +24,10 @@ static inline simType lapl(PointData *paq);
 static inline simType dV(simType phi);
 
 /* Data convolution - generic smoothing to reduce Gibbs oscillations */
-static inline void convolve(simType *data, simType *temp, simType coeff);
+static void convolve(simType *data, simType *temp, simType coeff);
 
+/* Interpolation function? */
+// static gsl_spline getfn(IOData filedata, gsl_interp_accel acc);
 
 /* 
  * U^2 - commonly used quantity, stored so we only need to use it once.

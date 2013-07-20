@@ -131,7 +131,8 @@ void dumpstrip(simType *fields, IOData filedata)
 
 
 /*
- * Read in hdf5 state.
+ * Read in hdf5 field state.
+ * Resets all other values in fields array.
  */
 void readstate(simType *fields, IOData filedata)
 {
@@ -144,7 +145,7 @@ void readstate(simType *fields, IOData filedata)
   size_t          nelmts;
   unsigned int    flags,
                   filter_info;
-  int             i, j;
+  int             i, j, k, l;
 
   simType         min;
 
@@ -177,9 +178,22 @@ void readstate(simType *fields, IOData filedata)
   status = H5Dclose (dset);
   status = H5Fclose (file);
 
+  // Expand data to fill array appropriately
+  LOOP3(i,j,k)
+  {
+    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (4)] = fields[POINTS*POINTS*(i) + POINTS*(j) + (k)];
+  }
+  LOOP3(i,j,k)
+  {
+    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (0)] = 0.0;
+    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (1)] = 0.0;
+    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (2)] = 0.0;
+    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (3)] = 0.0;
+    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (5)] = 0.0;
+  }
+
   return;
 }
-
 
 /* 
  * Explicitly write what physical time things occurred at - allow variable timestep.

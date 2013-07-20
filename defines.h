@@ -13,6 +13,7 @@
 #include <fftw3.h>
 #include <getopt.h>
 #include <zlib.h>
+// #include <gsl/gsl_spline.h>
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
