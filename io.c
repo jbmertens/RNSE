@@ -178,18 +178,21 @@ void readstate(simType *fields, IOData filedata)
   status = H5Dclose (dset);
   status = H5Fclose (file);
 
-  // Expand data to fill array appropriately
+  // Expand data to fill array appropriately (work backwords so data isn't overwritten)
+  for(i=POINTS-1; i>=0; i--) {
+    for(j=POINTS-1; j>=0; j--)
+      for(k=POINTS-1; k>=0; k--)
+      {
+        fields[INDEX(i,j,k,4)] = fields[POINTS*POINTS*(i) + POINTS*(j) + (k)];
+      }
+    }
   LOOP3(i,j,k)
   {
-    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (4)] = fields[POINTS*POINTS*(i) + POINTS*(j) + (k)];
-  }
-  LOOP3(i,j,k)
-  {
-    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (0)] = 0.0;
-    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (1)] = 0.0;
-    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (2)] = 0.0;
-    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (3)] = 0.0;
-    fields[DOF*POINTS*POINTS*(i) + DOF*POINTS*(j) + DOF*(k) + (5)] = 0.0;
+    fields[INDEX(i,j,k,0)] = 0.0;
+    fields[INDEX(i,j,k,1)] = 0.0;
+    fields[INDEX(i,j,k,2)] = 0.0;
+    fields[INDEX(i,j,k,3)] = 0.0;
+    fields[INDEX(i,j,k,5)] = 0.0;
   }
 
   return;
