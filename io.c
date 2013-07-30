@@ -165,12 +165,6 @@ void readstate(simType *fields, IOData filedata)
   status = H5Dread (dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, fields);
   printf ("Status after reading is: %d\n", status);
 
-  min = fields[0];
-  for(i=0; i<POINTS*POINTS*POINTS*DOF; i++)
-      if(min > fields[i])
-        min = fields[i];
-  printf ("Minimum value is: %5.5f\n", min);
-
   /*
    * Close and release resources.
    */
