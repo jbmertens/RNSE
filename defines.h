@@ -24,6 +24,8 @@
 #define W_EOSm1     (W_EOS - 1.0)
 #define W_EOSp1     (W_EOS + 1.0)
 
+#define LOG_E     0.0  /* Log of fluid energy density */
+
 /*1 (ln of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
 #define DOF ((long long) 6)  
 

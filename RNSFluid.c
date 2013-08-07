@@ -159,7 +159,7 @@ int main(int argc, char **argv)
         for(k=0; k<POINTS; k++)
         {
           // 0-component is log of energy density
-          fields[INDEX(i,j,k,0)] = 0; // energy density is e^log(1) = 1
+          fields[INDEX(i,j,k,0)] = LOG_E; // energy density is e^log(1) = 1
 
           // velocity pattern - at rest
           fields[INDEX(i,j,k,1)] = 0.0;

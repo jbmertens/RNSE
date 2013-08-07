@@ -182,7 +182,7 @@ void readstate(simType *fields, IOData filedata)
     }
   LOOP3(i,j,k)
   {
-    fields[INDEX(i,j,k,0)] = 0.0;
+    fields[INDEX(i,j,k,0)] = LOG_E;
     fields[INDEX(i,j,k,1)] = 0.0;
     fields[INDEX(i,j,k,2)] = 0.0;
     fields[INDEX(i,j,k,3)] = 0.0;
