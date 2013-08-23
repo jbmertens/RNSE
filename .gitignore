@@ -3,3 +3,4 @@
 rnse
 data/*
 *.out
+*.sublime-*
