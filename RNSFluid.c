@@ -150,6 +150,38 @@ int main(int argc, char **argv)
   // Basically, a 'snapshot' of the first two peaks - call this the 'afterimage'.
   after = (simType *) malloc(AREA_STORAGE * 2 * METHOD_ORDER * ((long long) sizeof(simType)));
 
+  /* Storage space for stress-energy tensor, perturbation tensors */
+  // [GW EVOLVE]
+
+  simType **STTij, **h, **l;
+  fftw_complex **fSTTij;
+
+  // 6 components to evolve -
+  //   x2 = 12 components, for real and imaginary parts.
+  //   - For reals: map (a, b) index on T_ab to array index using: (7-a)*a/2-4+b. 
+  //   - For ims: map (a, b) index on T_ab to array index using: 6 + (7-a)*a/2-4+b. 
+  // allocate space...
+
+  // S_TT is Purely real (normal array)
+  STTij = (simType **) malloc(6 * sizeof(simType *));
+  // fSTT has 6 fftw_complex components
+  fSTTij = (fftw_complex **) malloc(6 * sizeof(fftw_complex *));
+  for(i=0; i<6; i++)
+  {
+    STTij[i] = (simType *) malloc(GRID_STORAGE * ((long long) sizeof(simType)));
+    fSTTij[i] = (fftw_complex *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(fftw_complex)));
+  }
+
+  // Metric is complex
+  h = (simType **) malloc(12 * sizeof(simType *));
+  l = (simType **) malloc(12 * sizeof(simType *));
+  for(i=0; i<12; i++)
+  {
+    h[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+    l[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+  }
+
+
   if(0 == read_initial_step)
   {
     /* initialize data in static bubble configuration */
@@ -256,6 +288,7 @@ int main(int argc, char **argv)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, 0, j, k);
+        set_stt(&paq, STTij, 0, j, k);
         for(u=0; u<DOF; u++) {
           after[INDEX(0,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
@@ -269,6 +302,7 @@ int main(int argc, char **argv)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, 1, j, k);
+        set_stt(&paq, STTij, 1, j, k);
         for(u=0; u<DOF; u++) {
           after[INDEX(1,j,k,u)] = wedge[INDEX(3,j,k,u)];
         }
@@ -282,6 +316,7 @@ int main(int argc, char **argv)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, 2, j, k);
+        set_stt(&paq, STTij, 2, j, k);
       }
 
     // Move along, move along home
@@ -302,7 +337,10 @@ int main(int argc, char **argv)
       // calculate new wedge peak
       #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
+      {
         w2pevolve(fields, wedge, &paq, i-1, j, k);
+        set_stt(&paq, STTij, i-1, j, k);
+      }
 
     }
 

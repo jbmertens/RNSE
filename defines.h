@@ -44,7 +44,7 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           10000             /* Maximum # of steps to run */
+#define MAX_STEPS           2000          /* Maximum # of steps to run */
 #define STEPS_TO_SAMPLE     0             /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    50            /* # of points along (x-)axis to
@@ -67,11 +67,15 @@
 /* array element access macros */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*((i)%POINTS) + DOF*POINTS*(j) + DOF*(k) + (l))
 #define WINDEX(i,j,k,l) (DOF*POINTS*POINTS*(((i)%POINTS)%3) + DOF*POINTS*(j) + DOF*(k) + (l))
+#define SINDEX(i,j,k) (POINTS*POINTS*((i)%POINTS) + POINTS*(j) + (k))
 /* Common for loop structure */
 #define LOOP2(j,k) for(j=0; j<POINTS; j++) \
                    for(k=0; k<POINTS; k++)
 #define LOOP3(i,j,k) for(i=0; i<POINTS; i++) LOOP2(j,k)
 #define LOOP4(i,j,k,u) LOOP3(i,j,k) for(u=0; u<DOF; u++)
+
+#define C_RE(c) ((c)[0])
+#define C_IM(c) ((c)[1])
 
 /* TYPEDEFS */
 /* Precision/format we'd like to use for this simulation: */
@@ -103,21 +107,6 @@ typedef struct {
   simType srcsum;
   simType trgrad;
   simType ude;
-
-  /* S^{TT}_{ij}
-    Gauge choices and coordinate choices allow us to only calculate two components.
-    Of the original 9 components of h_ij, we can constrain a given number of components:
-      Symmetric => 3
-      Transverse => 3
-      Traceless => 1
-    Giving 9-3-3-1 = 2 independent degrees of freedom.
-    However, degeneracies may exist around certain values.  Evolving 3 independent values
-    quantities helps break this degeneracy, and also allows for consistency checks.
-
-    Here, we evolve h_11, h_13, and h_33.  See writeup for specifics on consistency checking
-    and formulation behind the evolution.
-   */
-  simType STT[3];
 
 } PointData;
 

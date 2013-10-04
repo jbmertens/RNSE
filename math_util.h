@@ -59,12 +59,11 @@ static inline simType Ut(PointData *paq)
 
 
 /* 
- * Taking derivatives.  Assumes toroidial boundary conditions in each direction.
- * On the wedge base here, so derivative can only be taken at points 'inside' the base.
+ * Taking derivatives.  This uses pre-stored values to avoid multiple calls to the wedge.
+ * Working on the wedge base here, so derivative can only be taken at points 'inside' the base.
  */
 static inline simType derivative(PointData *paq, int ddim /* direction of derivative */, int dim)
 {
-  /* taking modulo here for each point */
   switch(ddim)
   {
     case 1:
@@ -74,6 +73,40 @@ static inline simType derivative(PointData *paq, int ddim /* direction of deriva
     case 3:
       return (paq->adjacentFields[2][dim] - paq->adjacentFields[5][dim])/2/dx;
   }
+
+  // Try out alternative differences - prefferentially take a handed derivative.  This
+  // is to help prevent instabilities from forming.
+
+  // simType nvel = 0.0;
+  // if(ddim <= 3) {
+  //   simType mf = 10.0*paq->fields[ddim];
+  //   nvel = mf / sqrt(1.0 + mf*mf);
+  // } else {
+  //   if(paq->fields[5] > 0) {
+  //     nvel = 1.0;
+  //   } else if(paq->fields[5] < 0) {
+  //     nvel = -1.0;
+  //   }
+  // }
+
+  // switch(ddim)
+  // {
+  //   case 1:
+  //     return (
+  //             (1.0 - nvel)*(paq->adjacentFields[0][dim] - paq->fields[dim])
+  //             + (1.0 + nvel)*(paq->fields[dim] - paq->adjacentFields[3][dim])
+  //           )/2/dx;
+  //   case 2:
+  //     return (
+  //             (1.0 - nvel)*(paq->adjacentFields[1][dim] - paq->fields[dim])
+  //             + (1.0 + nvel)*(paq->fields[dim] - paq->adjacentFields[4][dim])
+  //           )/2/dx;
+  //   case 3:
+  //     return (
+  //             (1.0 - nvel)*(paq->adjacentFields[2][dim] - paq->fields[dim])
+  //             + (1.0 + nvel)*(paq->fields[dim] - paq->adjacentFields[5][dim])
+  //           )/2/dx;
+  // }
 
   /* XXX */
   return 0;
