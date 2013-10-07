@@ -169,7 +169,7 @@ int main(int argc, char **argv)
   for(i=0; i<6; i++)
   {
     STTij[i] = (simType *) malloc(GRID_STORAGE * ((long long) sizeof(simType)));
-    fSTTij[i] = (fftw_complex *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(fftw_complex)));
+    fSTTij[i] = (fftw_complex *) fftw_malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(fftw_complex)));
   }
 
   // Metric is complex

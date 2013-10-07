@@ -76,6 +76,7 @@
 
 #define C_RE(c) ((c)[0])
 #define C_IM(c) ((c)[1])
+#define pw2(x) ((x)*(x))
 
 /* TYPEDEFS */
 /* Precision/format we'd like to use for this simulation: */
