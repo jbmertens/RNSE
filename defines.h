@@ -30,7 +30,7 @@
 #define DOF ((long long) 6)  
 
 /* resolution parameters */
-#define SIZE    (10*R0)                         /* physical size in space */
+#define SIZE    (5*R0)                         /* physical size in space */
 #define POINTS  ((long long) 128)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
@@ -67,7 +67,7 @@
 /* array element access macros */
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*((i)%POINTS) + DOF*POINTS*(j) + DOF*(k) + (l))
 #define WINDEX(i,j,k,l) (DOF*POINTS*POINTS*(((i)%POINTS)%3) + DOF*POINTS*(j) + DOF*(k) + (l))
-#define SINDEX(i,j,k) (POINTS*POINTS*((i)%POINTS) + POINTS*(j) + (k))
+#define SINDEX(i,j,k) (POINTS*POINTS*(i) + POINTS*(j) + (k))
 /* Common for loop structure */
 #define LOOP2(j,k) for(j=0; j<POINTS; j++) \
                    for(k=0; k<POINTS; k++)

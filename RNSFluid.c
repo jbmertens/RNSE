@@ -138,9 +138,11 @@ int main(int argc, char **argv)
   PointData paq;
 
   /* Fluid/field storage space for data on 3 dimensional grid. */
-  simType *fields, *wedge, *after, *transfer;
+  simType *fields, *wedge, *after, *transfer, *dumper;
   // actual grid
   fields     = (simType *) malloc(STORAGE * ((long long) sizeof(simType)));
+  // undersampled grid to output on
+  dumper     = (simType *) malloc(DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE * ((long long) sizeof(simType)));
   // For the "wedge", R^2 storage locations are needed.
   // wedge[i=0-2] are 'base', wedge[i=3] is 'peak'
   wedge      = (simType *) malloc(AREA_STORAGE * METHOD_ORDER * METHOD_ORDER * ((long long) sizeof(simType)));
@@ -150,18 +152,14 @@ int main(int argc, char **argv)
   // Basically, a 'snapshot' of the first two peaks - call this the 'afterimage'.
   after = (simType *) malloc(AREA_STORAGE * 2 * METHOD_ORDER * ((long long) sizeof(simType)));
 
-  /* Storage space for stress-energy tensor, perturbation tensors */
-  // [GW EVOLVE]
-
-  simType **STTij, **h, **l;
+  /* [GW EVOLVE] Storage space for stress-energy tensor, perturbation tensors */
+  simType **STTij, **hij, **lij;
   fftw_complex **fSTTij;
-
   // 6 components to evolve -
   //   x2 = 12 components, for real and imaginary parts.
   //   - For reals: map (a, b) index on T_ab to array index using: (7-a)*a/2-4+b. 
   //   - For ims: map (a, b) index on T_ab to array index using: 6 + (7-a)*a/2-4+b. 
   // allocate space...
-
   // S_TT is Purely real (normal array)
   STTij = (simType **) malloc(6 * sizeof(simType *));
   // fSTT has 6 fftw_complex components
@@ -171,14 +169,13 @@ int main(int argc, char **argv)
     STTij[i] = (simType *) malloc(GRID_STORAGE * ((long long) sizeof(simType)));
     fSTTij[i] = (fftw_complex *) fftw_malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(fftw_complex)));
   }
-
   // Metric is complex
-  h = (simType **) malloc(12 * sizeof(simType *));
-  l = (simType **) malloc(12 * sizeof(simType *));
+  hij = (simType **) malloc(12 * sizeof(simType *));
+  lij = (simType **) malloc(12 * sizeof(simType *));
   for(i=0; i<12; i++)
   {
-    h[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
-    l[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+    hij[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+    lij[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
   }
 
 
@@ -229,42 +226,38 @@ int main(int argc, char **argv)
   for (s=1; s<=MAX_STEPS; s++)
   {
 
-/* TODO:
-    // write data if necessary
+    /* Write Fourier Transform data if needed */
+    // if(s % T_DUMPINT == 0)
+    // {
+    //   // We can re-use the STT/fSTT arrays, since they have the correct
+    //   // number of fields and aren't needed yet.
+    //   LOOP4(i,j,k,u)
+    //     STTij[u][SINDEX(i,j,k)] = fields[INDEX(i, j, k, u)];
+    //   fftdump(STTij, fSTTij, filedata);
+    // }
+
+    /* write (possibly undersampled) data if needed */
     if(s % T_SAMPLEINT == 0)
     {
-      // fieldsnext is not being used yet, so we can use it to store an undersampled array of data:
+      // use dumper array to store an undersampled array of data:
       LOOP4(i,j,k,u)
-        fieldsnext[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
+        dumper[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
           = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
-
-      //printf("\rWriting step %i of %i ...", s, MAX_STEPS);
-      //fflush(stdout);
       filedata.datasize = POINTS_TO_SAMPLE;
-      dumpstate(fieldsnext, filedata);
+      dumpstate(dumper, filedata);
       filedata.fwrites++;
     } // end write step
-/**/
 
+
+    /* dump a strip of the simulation along one axis. */
     if(DUMP_STRIP)
     {
       dumpstrip(fields, filedata);
     }
 
 
-// TODO:
-    // // write full dump and Hartley Transform data if appropriate
-    // if(s % T_DUMPINT == 0)
-    // {
-    //    fieldsnext isn't being used, so we can pass it in as storage 
-    //   //printf("\nDumping HT for step %i of %i ...\n", s, MAX_STEPS);
-    //   //fflush(stdout);
-    //   hartleydump(fields, fieldsnext, filedata);
-    // }
-
-
 /****
- * Memory-efficient midpoint implementation, hopefully at no significant speed cost.
+ * Memory-efficient midpoint implementation, hopefully without significant slowdown.
  * Requires several area grids, forming a "wedge", and an initial snapshot of the
  * first two calculations, an "afterimage".
  * For the midpoint method:
@@ -353,8 +346,12 @@ int main(int argc, char **argv)
         fields[INDEX(1,j,k,u)] = after[INDEX(1,j,k,u)];
       }
 
-
 /** End wedge method **/
+
+    /* Evolve and output GW stuff (S_TT is calculated during evolution) */
+    fft_stt(STTij, fSTTij);
+    h_evolve(hij, lij, fSTTij);
+    store_gws(lij, filedata);
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < STOP_MAX)
     {

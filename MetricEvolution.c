@@ -1,11 +1,19 @@
 /* RNSE includes */
 #include "defines.h"
 
+/*
+ * Funcitonality in this file evolves the fourier trasnforlm of the
+ * metric perturbations.  Te use, run (in this order):
+ *  set_stt
+ *  fft_stt
+ *  h_evolve
+ *  store_gws
+ */
 
 /*
  * Calculate the actual gravitational wave spectrum from l
  */
-void store_gws(simType **lij)
+void store_gws(simType **lij, IOData filedata)
 {
 
   simType array_out[(int)(1.73205*(POINTS/2))+1];
@@ -16,11 +24,10 @@ void store_gws(simType **lij)
 
   double pmagnitude_gw; // Total momentum (p) in units of lattice spacing, pmagnitude = Sqrt(px^2+py^2+pz^2). This also gives the bin index since bin spacing is set to equal lattice spacing.
   double fp2_gw;
-  int i,j,k,px,py,pz; // px, py, and pz are components of momentum in units of grid spacing
+  int i, j, k, px, py, pz; // px, py, and pz are components of momentum in units of grid spacing
 
-  // Calculate magnitude of momentum in each bin
+  // Initial magnitude of momentum in each bin
   for(i=0; i<numbins_gw; i++) {
-    p[i] = (double) i;
     f2_gw[i] = 0.0;
     numpoints_gw[i] = 0;
   }
@@ -60,7 +67,7 @@ void store_gws(simType **lij)
         
       pz = POINTS/2;
       k = POINTS/2;
-      pmagnitude_gw=sqrt(pw2(px) + pw2(py) + pw2(pz));
+      pmagnitude_gw = sqrt(pw2(px) + pw2(py) + pw2(pz));
       fp2_gw = pw2(lij[0][SINDEX(i,j,k)]) + pw2(lij[6][SINDEX(i,j,k)])
         + 2.*pw2(lij[1][SINDEX(i,j,k)]) + 2.*pw2(lij[7][SINDEX(i,j,k)])
         + 2.*pw2(lij[2][SINDEX(i,j,k)]) + 2.*pw2(lij[8][SINDEX(i,j,k)])
@@ -75,22 +82,44 @@ void store_gws(simType **lij)
   for(i=0; i<numbins_gw; i++)
   {
     // Converts sums to averages. (numpoints[i] should always be greater than zero.)
-    if(numpoints_gw[i]>0)
+    if(numpoints_gw[i] > 0)
     {
-        array_out[i] = f2_gw[i]/((double) numpoints_gw[i]);
+      array_out[i] = f2_gw[i]*pow((double)i,3.)/((double) numpoints_gw[i]);
     }
     else
     {
-        array_out[i] = 0.;
+      array_out[i] = 0.;
     }
   }
-  
-  FILE *gwspec;
-  gwspec = fopen("gwspec.txt", "a");  
-  for(i=0;i<numbins_gw;i++) {
-    fprintf(gwspec,"%10.10f %10.10f\n", p[i], array_out[i]);
+
+
+  // write data
+  char *filename, *buffer;
+  gzFile *datafile;
+
+  filename = malloc(200 * sizeof(*filename));
+  strcpy(filename, filedata.data_dir);
+  strcat(filename, filedata.data_name);
+  strcat(filename,  ".gwspec.dat.gz");
+  buffer = malloc(20 * sizeof(*buffer));
+
+  datafile = (gzFile *)gzopen(filename, "ab");
+  if(datafile == Z_NULL) {
+    printf("Error opening file: %s\n", filename);
+    return;
   }
-  fclose (gwspec);
+
+  for(i=0; i<numbins_gw; i++)
+  {
+    // field values
+    sprintf(buffer, "%g\t", array_out[i]);
+    gzwrite(datafile, buffer, strlen(buffer));
+  }  
+  gzwrite(datafile, "\n", strlen("\n")); 
+ 
+  gzclose(datafile);
+  free(filename);
+  free(buffer);
     
   return;
 }
@@ -102,7 +131,7 @@ void store_gws(simType **lij)
 void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 {
   int i, j, k, a, b;
-  simType pz, px, py, p, p2;
+  simType pz, px, py, pp, p2;
   simType h, l, S, trs_RE, trs_IM;
 
   // evolve h_ij (the fourier transform of)
@@ -176,11 +205,10 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
         for(int k=0; k<POINTS/2+1; k++)
         {
           pz = (simType) k;
-          p = sqrt(px*px + py*py + pz*pz); // p (momentum)
+          pp = px*px + py*py + pz*pz; // p (momentum)
           h = hij[a][SINDEX(i,j,k)];
           l = lij[a][SINDEX(i,j,k)];
 
-          S;
           if(a >= 6) {
             S = C_IM(fSTTij[a-6][SINDEX(i,j,k)]);
           } else {
@@ -188,8 +216,8 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
           }
 
           // This is RK4. Promise.
-          hij[a][SINDEX(i,j,k)] += dt*(l*(6.0 + p*p*dt*dt) + dt*(h*k*k + S)*(12.0 + dt*dt*p*p)/4.0)/6.0;
-          lij[a][SINDEX(i,j,k)] += dt*(6.0*S + 3.0*p*p*l*dt + p*p*p*p*l*dt*dt*dt/4.0 + h*p*p*(6.0 + p*p*dt*dt))/6.0;
+          hij[a][SINDEX(i,j,k)] += dt*(l*(6.0 + pp*dt*dt) + dt*(h*pp + S)*(12.0 + dt*dt*pp)/4.0)/6.0;
+          lij[a][SINDEX(i,j,k)] += dt*(6.0*S + 3.0*pp*l*dt + pp*pp*l*dt*dt*dt/4.0 + h*pp*(6.0 + pp*dt*dt))/6.0;
         }
       }
     }

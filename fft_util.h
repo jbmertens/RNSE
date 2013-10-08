@@ -1,6 +1,6 @@
 #ifndef FFT_H
 #define FFT_H
 
-void hartleydump(simType *fields, simType *storage, IOData filedata);
+void fftdump(simType **STTij, fftw_complex **fSTTij, IOData filedata);
 
 #endif
