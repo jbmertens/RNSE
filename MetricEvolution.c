@@ -43,12 +43,12 @@ void store_gws(simType **lij, IOData filedata)
       {
         pz = k;
         pmagnitude_gw = sqrt(pw2(px) + pw2(py) + pw2(pz));
-        fp2_gw = pw2(lij[0][SINDEX(i,j,k)]) + pw2(lij[6][SINDEX(i,j,k)])
-          + 2.*pw2(lij[1][SINDEX(i,j,k)]) + 2.*pw2(lij[7][SINDEX(i,j,k)])
-          + 2.*pw2(lij[2][SINDEX(i,j,k)]) + 2.*pw2(lij[8][SINDEX(i,j,k)])
-          + pw2(lij[3][SINDEX(i,j,k)]) + pw2(lij[9][SINDEX(i,j,k)])
-          + 2.*pw2(lij[4][SINDEX(i,j,k)]) + 2.*pw2(lij[10][SINDEX(i,j,k)])
-          + pw2(lij[5][SINDEX(i,j,k)]) + pw2(lij[11][SINDEX(i,j,k)]);
+        fp2_gw = pw2(lij[0][fSINDEX(i,j,k)]) + pw2(lij[6][fSINDEX(i,j,k)])
+          + 2.*pw2(lij[1][fSINDEX(i,j,k)]) + 2.*pw2(lij[7][fSINDEX(i,j,k)])
+          + 2.*pw2(lij[2][fSINDEX(i,j,k)]) + 2.*pw2(lij[8][fSINDEX(i,j,k)])
+          + pw2(lij[3][fSINDEX(i,j,k)]) + pw2(lij[9][fSINDEX(i,j,k)])
+          + 2.*pw2(lij[4][fSINDEX(i,j,k)]) + 2.*pw2(lij[10][fSINDEX(i,j,k)])
+          + pw2(lij[5][fSINDEX(i,j,k)]) + pw2(lij[11][fSINDEX(i,j,k)]);
         numpoints_gw[(int)pmagnitude_gw] += 2;
         f2_gw[(int)pmagnitude_gw] += 2.*fp2_gw;
       }
@@ -56,24 +56,24 @@ void store_gws(simType **lij, IOData filedata)
       pz = 0;
       k = 0;
       pmagnitude_gw = sqrt(pw2(px) + pw2(py) + pw2( pz));
-      fp2_gw = pw2(lij[0][SINDEX(i,j,k)]) + pw2(lij[6][SINDEX(i,j,k)])
-        + 2.*pw2(lij[1][SINDEX(i,j,k)]) + 2.*pw2(lij[7][SINDEX(i,j,k)])
-        + 2.*pw2(lij[2][SINDEX(i,j,k)]) + 2.*pw2(lij[8][SINDEX(i,j,k)])
-        + pw2(lij[3][SINDEX(i,j,k)]) + pw2(lij[9][SINDEX(i,j,k)])
-        + 2.*pw2(lij[4][SINDEX(i,j,k)]) + 2.*pw2(lij[10][SINDEX(i,j,k)])
-        + pw2(lij[5][SINDEX(i,j,k)]) + pw2(lij[11][SINDEX(i,j,k)]);  
+      fp2_gw = pw2(lij[0][fSINDEX(i,j,k)]) + pw2(lij[6][fSINDEX(i,j,k)])
+        + 2.*pw2(lij[1][fSINDEX(i,j,k)]) + 2.*pw2(lij[7][fSINDEX(i,j,k)])
+        + 2.*pw2(lij[2][fSINDEX(i,j,k)]) + 2.*pw2(lij[8][fSINDEX(i,j,k)])
+        + pw2(lij[3][fSINDEX(i,j,k)]) + pw2(lij[9][fSINDEX(i,j,k)])
+        + 2.*pw2(lij[4][fSINDEX(i,j,k)]) + 2.*pw2(lij[10][fSINDEX(i,j,k)])
+        + pw2(lij[5][fSINDEX(i,j,k)]) + pw2(lij[11][fSINDEX(i,j,k)]);  
       numpoints_gw[(int)pmagnitude_gw] += 1;
       f2_gw[(int)pmagnitude_gw] += fp2_gw;
         
       pz = POINTS/2;
       k = POINTS/2;
       pmagnitude_gw = sqrt(pw2(px) + pw2(py) + pw2(pz));
-      fp2_gw = pw2(lij[0][SINDEX(i,j,k)]) + pw2(lij[6][SINDEX(i,j,k)])
-        + 2.*pw2(lij[1][SINDEX(i,j,k)]) + 2.*pw2(lij[7][SINDEX(i,j,k)])
-        + 2.*pw2(lij[2][SINDEX(i,j,k)]) + 2.*pw2(lij[8][SINDEX(i,j,k)])
-        + pw2(lij[3][SINDEX(i,j,k)]) + pw2(lij[9][SINDEX(i,j,k)])
-        + 2.*pw2(lij[4][SINDEX(i,j,k)]) + 2.*pw2(lij[10][SINDEX(i,j,k)])
-        + pw2(lij[5][SINDEX(i,j,k)]) + pw2(lij[11][SINDEX(i,j,k)]);
+      fp2_gw = pw2(lij[0][fSINDEX(i,j,k)]) + pw2(lij[6][fSINDEX(i,j,k)])
+        + 2.*pw2(lij[1][fSINDEX(i,j,k)]) + 2.*pw2(lij[7][fSINDEX(i,j,k)])
+        + 2.*pw2(lij[2][fSINDEX(i,j,k)]) + 2.*pw2(lij[8][fSINDEX(i,j,k)])
+        + pw2(lij[3][fSINDEX(i,j,k)]) + pw2(lij[9][fSINDEX(i,j,k)])
+        + 2.*pw2(lij[4][fSINDEX(i,j,k)]) + 2.*pw2(lij[10][fSINDEX(i,j,k)])
+        + pw2(lij[5][fSINDEX(i,j,k)]) + pw2(lij[11][fSINDEX(i,j,k)]);
       numpoints_gw[(int)pmagnitude_gw] += 1;
       f2_gw[(int)pmagnitude_gw] += fp2_gw;
     }
@@ -131,7 +131,7 @@ void store_gws(simType **lij, IOData filedata)
 void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 {
   int i, j, k, a, b;
-  simType pz, px, py, pp, p2;
+  simType pz, px, py, pp, p2, p;
   simType h, l, S, trs_RE, trs_IM;
 
   // evolve h_ij (the fourier transform of)
@@ -140,7 +140,6 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 
 
   // only evolve the transverse/traceless part:
-  // #pragma omp parallel for default(shared) private(i, j, k) num_threads(threads)
   for(int i=0; i<POINTS; i++)
   {
     px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -150,49 +149,49 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
       for(int k=0; k<POINTS/2+1; k++)
       {
         pz = (simType) k;
-        p2 = px*px + py*py + pz*pz; // p^2 (momentum)
-        simType phat[3] = { px/sqrt(p2), py/sqrt(p2), pz/sqrt(p2) };
+        p = sqrt(px*px + py*py + pz*pz); // p (momentum)
+        simType phat[3] = { px/p, py/p, pz/p };
 
         // pre-calculate some stuff:          
           // Trace (S^a_a)
-          trs_RE = C_RE(fSTTij[0][SINDEX(i,j,k)]) + C_RE(fSTTij[3][SINDEX(i,j,k)]) + C_RE(fSTTij[5][SINDEX(i,j,k)]);
-          trs_IM = C_IM(fSTTij[0][SINDEX(i,j,k)]) + C_IM(fSTTij[3][SINDEX(i,j,k)]) + C_IM(fSTTij[5][SINDEX(i,j,k)]);
+          trs_RE = C_RE(fSTTij[0][fSINDEX(i,j,k)]) + C_RE(fSTTij[3][fSINDEX(i,j,k)]) + C_RE(fSTTij[5][fSINDEX(i,j,k)]);
+          trs_IM = C_IM(fSTTij[0][fSINDEX(i,j,k)]) + C_IM(fSTTij[3][fSINDEX(i,j,k)]) + C_IM(fSTTij[5][fSINDEX(i,j,k)]);
           // One contraction (k^m S_mi)
           simType k_mS_mi_RE[3] = { 
-            phat[1]*C_RE(fSTTij[0][SINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[1][SINDEX(i,j,k)]) + phat[3]*C_RE(fSTTij[2][SINDEX(i,j,k)]),
-            phat[1]*C_RE(fSTTij[1][SINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[3][SINDEX(i,j,k)]) + phat[3]*C_RE(fSTTij[4][SINDEX(i,j,k)]),
-            phat[1]*C_RE(fSTTij[2][SINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[4][SINDEX(i,j,k)]) + phat[3]*C_RE(fSTTij[5][SINDEX(i,j,k)])
+            phat[0]*C_RE(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[2][fSINDEX(i,j,k)]),
+            phat[0]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[4][fSINDEX(i,j,k)]),
+            phat[0]*C_RE(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[5][fSINDEX(i,j,k)])
           };
           simType k_mS_mi_IM[3] = { 
-            phat[1]*C_IM(fSTTij[0][SINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[1][SINDEX(i,j,k)]) + phat[3]*C_IM(fSTTij[2][SINDEX(i,j,k)]),
-            phat[1]*C_IM(fSTTij[1][SINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[3][SINDEX(i,j,k)]) + phat[3]*C_IM(fSTTij[4][SINDEX(i,j,k)]),
-            phat[1]*C_IM(fSTTij[2][SINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[4][SINDEX(i,j,k)]) + phat[3]*C_IM(fSTTij[5][SINDEX(i,j,k)])
+            phat[0]*C_IM(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[2][fSINDEX(i,j,k)]),
+            phat[0]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[4][fSINDEX(i,j,k)]),
+            phat[0]*C_IM(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[5][fSINDEX(i,j,k)])
           };
           // Two contractions (k^a k^b S_ab)
-          simType kkS_RE = phat[1]*k_mS_mi_RE[1] + phat[2]*k_mS_mi_RE[2] + phat[3]*k_mS_mi_RE[3];
-          simType kkS_IM = phat[1]*k_mS_mi_IM[1] + phat[2]*k_mS_mi_IM[2] + phat[3]*k_mS_mi_IM[3];
+          simType kkS_RE = phat[0]*k_mS_mi_RE[0] + phat[1]*k_mS_mi_RE[1] + phat[2]*k_mS_mi_RE[2];
+          simType kkS_IM = phat[0]*k_mS_mi_IM[0] + phat[1]*k_mS_mi_IM[1] + phat[2]*k_mS_mi_IM[2];
 
         for(a=1; a<=3; a++) {
           for(b=a; b<=3; b++) {
             // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
-            C_RE(fSTTij[(7-a)*a/2-4+b][SINDEX(i,j,k)]) +=
+            C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
               (
-                0.5*(phat[a]*phat[b] - (a==b))*trs_RE
-                + 0.5*(phat[a]*phat[b] + (a==b))*kkS_RE
-                - (phat[a]*k_mS_mi_RE[b] + phat[b]*k_mS_mi_RE[a])
+                0.5*(phat[a-1]*phat[b-1] - (a==b))*trs_RE
+                + 0.5*(phat[a-1]*phat[b-1] + (a==b))*kkS_RE
+                - (phat[a-1]*k_mS_mi_RE[b-1] + phat[b-1]*k_mS_mi_RE[a-1])
               );
-            C_IM(fSTTij[(7-a)*a/2-4+b][SINDEX(i,j,k)]) +=
+            C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
               (
-                0.5*(phat[a]*phat[b] - (a==b))*trs_RE
-                + 0.5*(phat[a]*phat[b] + (a==b))*kkS_RE
-                - (phat[a]*k_mS_mi_RE[b] + phat[b]*k_mS_mi_RE[a])
+                0.5*(phat[a-1]*phat[b-1] - (a==b))*trs_RE
+                + 0.5*(phat[a]*phat[b-1] + (a==b))*kkS_RE
+                - (phat[a-1]*k_mS_mi_RE[b-1] + phat[b-1]*k_mS_mi_RE[a-1])
               );
           }
         }
 
-      }
-    }
-  }
+      } // end k loop
+    } // end j
+  } // end i
 
   for(a=0; a<12; a++) {
     // #pragma omp parallel for default(shared) private(i, j, k) num_threads(threads)
@@ -205,19 +204,24 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
         for(int k=0; k<POINTS/2+1; k++)
         {
           pz = (simType) k;
-          pp = px*px + py*py + pz*pz; // p (momentum)
-          h = hij[a][SINDEX(i,j,k)];
-          l = lij[a][SINDEX(i,j,k)];
+          pp = (px*px + py*py + pz*pz); // p (momentum)
+          h = hij[a][fSINDEX(i,j,k)];
+          l = lij[a][fSINDEX(i,j,k)];
 
           if(a >= 6) {
-            S = C_IM(fSTTij[a-6][SINDEX(i,j,k)]);
+            S = C_IM(fSTTij[a-6][fSINDEX(i,j,k)]);
           } else {
-            S = C_RE(fSTTij[a][SINDEX(i,j,k)]);
+            S = C_RE(fSTTij[a][fSINDEX(i,j,k)]);
           }
 
           // This is RK4. Promise.
-          hij[a][SINDEX(i,j,k)] += dt*(l*(6.0 + pp*dt*dt) + dt*(h*pp + S)*(12.0 + dt*dt*pp)/4.0)/6.0;
-          lij[a][SINDEX(i,j,k)] += dt*(6.0*S + 3.0*pp*l*dt + pp*pp*l*dt*dt*dt/4.0 + h*pp*(6.0 + pp*dt*dt))/6.0;
+          hij[a][fSINDEX(i,j,k)] += dt*(l*(6.0 - pp*dt*dt) + dt*(-h*pp + S)*(12.0 - dt*dt*pp)/4.0)/6.0;
+          lij[a][fSINDEX(i,j,k)] += dt*(6.0*S - 3.0*pp*l*dt + pp*pp*l*dt*dt*dt/4.0 - h*pp*(6.0 - pp*dt*dt))/6.0;
+
+          // Euler
+          // hij[a][fSINDEX(i,j,k)] += dt*l;
+          // lij[a][fSINDEX(i,j,k)] += dt*(pow(dx,3)*S - h*pp);
+
         }
       }
     }
@@ -240,7 +244,7 @@ void fft_stt(simType **STTij, fftw_complex **fSTTij)
                             FFTW_ESTIMATE);
 
   // fourier transform stress-energy tensor
-  for(a=1; a<6; a++) {
+  for(a=0; a<6; a++) {
     fftw_execute_dft_r2c(p, STTij[a], fSTTij[a]);
   }
 }
@@ -256,13 +260,18 @@ void set_stt(PointData *paq, simType **STTij, int i, int j, int k)
   //      = (e+p)U^iU^j + d^ifd^jf - 1/3(\delta_ij)*( trace of previous terms )
   // The above is traceless, but not yet transverse.
 
+  simType dafdaf = paq->gradients[1][4]*paq->gradients[1][4]
+                   + paq->gradients[2][4]*paq->gradients[2][4]
+                   + paq->gradients[3][4]*paq->gradients[3][4];
+
   int a, b;
   for(a=1; a<=3; a++) {
     for(b=a; b<=3; b++) {
       // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
       STTij[(7-a)*a/2-4+b][SINDEX(i,j,k)] =
-          pow(paq->gradients[a][5],2)
-            + W_EOSp1 * exp(paq->fields[0]) * paq->fields[a] * paq->fields[b];
+          paq->gradients[a][4] * paq->gradients[b][4]
+          - (a==b)*(dafdaf/2.0 + V(paq->fields[4]) - W_EOS*exp(paq->fields[0]))
+          + W_EOSp1 * exp(paq->fields[0]) * paq->fields[a] * paq->fields[b];
     }
   }
 

@@ -21,6 +21,7 @@ static inline simType derivative(PointData *paq, int ddim, int dim);
 static inline simType lapl(PointData *paq);
 
 /* potential function */
+static inline simType V(simType phi);
 static inline simType dV(simType phi);
 
 /* Data convolution - generic smoothing to reduce Gibbs oscillations */
@@ -198,6 +199,16 @@ static inline simType dV(simType phi)
 {
   // return 0;
   return phi + phi*(3.0/2.0*phi + getALPHA()/2.0*phi*phi);
+}
+
+
+/* 
+ * Symmetry breaking potential - \phi^4 with linear perturbation.
+ */
+static inline simType V(simType phi)
+{
+  // return 0;
+  return phi*(phi/2.0 + phi*phi/2.0 + getALPHA()/8.0*phi*phi*phi);
 }
 
 

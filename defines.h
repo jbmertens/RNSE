@@ -34,7 +34,7 @@
 #define POINTS  ((long long) 128)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/10.0)
+#define dt      (dx/20.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
@@ -51,7 +51,7 @@
                                                sample */
 
 /* special features */
-#define STOP_CELL           10  /* Check for negative field value (eg, bubble wall)
+#define STOP_CELL           -1  /* Check for negative field value (eg, bubble wall)
                                    this many voxels away from the boundary.
                                    If the field value in this cell becomes negative,
                                    the simulation should stop running.
@@ -65,9 +65,15 @@
 #define DEFAULT_DATA_NAME     "data"
 
 /* array element access macros */
+// fields array
 #define INDEX(i,j,k,l) (DOF*POINTS*POINTS*((i)%POINTS) + DOF*POINTS*(j) + DOF*(k) + (l))
+// wedge array structure
 #define WINDEX(i,j,k,l) (DOF*POINTS*POINTS*(((i)%POINTS)%3) + DOF*POINTS*(j) + DOF*(k) + (l))
+// stress-energy (pre-fft)
 #define SINDEX(i,j,k) (POINTS*POINTS*(i) + POINTS*(j) + (k))
+// stress-energy (fft-valued)
+#define fSINDEX(i,j,k) ((POINTS/2+1)*POINTS*(i) + (POINTS/2+1)*(j) + (k))
+
 /* Common for loop structure */
 #define LOOP2(j,k) for(j=0; j<POINTS; j++) \
                    for(k=0; k<POINTS; k++)

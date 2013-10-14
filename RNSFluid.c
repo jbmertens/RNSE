@@ -172,11 +172,17 @@ int main(int argc, char **argv)
   // Metric is complex
   hij = (simType **) malloc(12 * sizeof(simType *));
   lij = (simType **) malloc(12 * sizeof(simType *));
-  for(i=0; i<12; i++)
+  for(s=0; s<12; s++)
   {
-    hij[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
-    lij[i] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+    hij[s] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+    lij[s] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
+    LOOP3(i,j,k)
+    {
+      hij[s][SINDEX(i,j,k)] = 0;
+      lij[s][SINDEX(i,j,k)] = 0;
+    }
   }
+
 
 
   if(0 == read_initial_step)
@@ -223,6 +229,7 @@ int main(int argc, char **argv)
   time_t time_start = time(NULL);
 
   /* Actual Evolution code */
+  printf("Running");
   for (s=1; s<=MAX_STEPS; s++)
   {
 
@@ -352,6 +359,9 @@ int main(int argc, char **argv)
     fft_stt(STTij, fSTTij);
     h_evolve(hij, lij, fSTTij);
     store_gws(lij, filedata);
+
+    printf(".");
+    fflush(stdout);
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < STOP_MAX)
     {
