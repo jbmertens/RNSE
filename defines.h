@@ -31,7 +31,7 @@
 
 /* resolution parameters */
 #define SIZE    (5*R0)                         /* physical size in space */
-#define POINTS  ((long long) 128)               /* number of points on
+#define POINTS  ((long long) 64)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
 #define dt      (dx/20.0)
@@ -66,9 +66,9 @@
 
 /* array element access macros */
 // fields array
-#define INDEX(i,j,k,l) (DOF*POINTS*POINTS*((i)%POINTS) + DOF*POINTS*(j) + DOF*(k) + (l))
+#define INDEX(i,j,k,l) (DOF*POINTS*POINTS*((i+POINTS)%POINTS) + DOF*POINTS*((j+POINTS)%POINTS) + DOF*((k+POINTS)%POINTS) + (l))
 // wedge array structure
-#define WINDEX(i,j,k,l) (DOF*POINTS*POINTS*(((i)%POINTS)%3) + DOF*POINTS*(j) + DOF*(k) + (l))
+#define WINDEX(i,j,k,l) (DOF*POINTS*POINTS*((i+3)%3) + DOF*POINTS*((j+POINTS)%POINTS) + DOF*((k+POINTS)%POINTS) + (l))
 // stress-energy (pre-fft)
 #define SINDEX(i,j,k) (POINTS*POINTS*(i) + POINTS*(j) + (k))
 // stress-energy (fft-valued)
