@@ -1,7 +1,20 @@
 #include "defines.h"
 
+simType tanhbubble(int i, int j, int k, simType xcent, simType ycent, simType zcent)
+{
+  return (3.0 + sqrt(9.0 - 8.0*getALPHA()))/4.0/getALPHA()*(
+    tanh(1.0/2.0*(
+      sqrt(
+        pow( (i*1.0 - xcent)*dx , 2)
+        + pow( (j*1.0 - ycent)*dx , 2)
+        + pow( (k*1.0 - zcent)*dx , 2)
+      ) - R0
+    )) - 1.0
+  );
+}
 
-static inline void convolve(simType *data, simType *temp, simType coeff)
+
+void convolve(simType *data, simType *temp, simType coeff)
 {
   int i, j, k, u;
   int x, y, z, n;

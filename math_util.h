@@ -24,8 +24,11 @@ static inline simType lapl(PointData *paq);
 static inline simType V(simType phi);
 static inline simType dV(simType phi);
 
+/* Bubble profile for nucleation */
+simType tanhbubble(int i, int j, int k, simType xcent, simType ycent, simType zcent);
+
 /* Data convolution - generic smoothing to reduce Gibbs oscillations */
-static void convolve(simType *data, simType *temp, simType coeff);
+void convolve(simType *data, simType *temp, simType coeff);
 
 /* Interpolation function? */
 // static gsl_spline getfn(IOData filedata, gsl_interp_accel acc);
@@ -208,7 +211,7 @@ static inline simType dV(simType phi)
 static inline simType V(simType phi)
 {
   // return 0;
-  return phi*(phi/2.0 + phi*phi/2.0 + getALPHA()/8.0*phi*phi*phi);
+  return phi*(phi/2.0 + phi*phi/2.0 + getALPHA()/8.0*phi*phi*phi) + V_OFFSET;
 }
 
 

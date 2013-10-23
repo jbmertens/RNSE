@@ -204,16 +204,9 @@ int main(int argc, char **argv)
           // scalar field
           // spherically symmetric soliton/"bubble" solution - first order
           // approximation in vacuum energy difference
-          fields[INDEX(i,j,k,4)] = (3.0 + sqrt(9.0 - 8.0*getALPHA()))/4.0/getALPHA()
-            *(
-              tanh(1.0/2.0*(
-                sqrt(
-                  pow( (i*1.0-((double) POINTS)/2.0)*dx , 2)
-                  + pow( (j*1.0-((double) POINTS)/2.0)*dx , 2)
-                  + pow( (k*1.0-((double) POINTS)/2.0)*dx , 2)
-                ) - R0
-              )) - 1.0
-            );
+          fields[INDEX(i,j,k,4)] = 
+            tanhbubble(i, j, k, POINTS/3.0, POINTS/2.0, POINTS/2.0)
+            + tanhbubble(i, j, k, 2.0*POINTS/3.0, POINTS/2.0, POINTS/2.0);
 
           // time-derivative of scalar field
           fields[INDEX(i,j,k,5)] = 0;
@@ -247,9 +240,15 @@ int main(int argc, char **argv)
     if(s % T_SAMPLEINT == 0)
     {
       // use dumper array to store an undersampled array of data:
-      LOOP4(i,j,k,u)
-        dumper[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
-          = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
+      for(i=0; i<POINTS_TO_SAMPLE; i++)
+        for(j=0; j<POINTS_TO_SAMPLE; j++)
+          for(k=0; k<POINTS_TO_SAMPLE; k++)
+            for(u=0; u<DOF; u++)
+            {
+              dumper[DOF*POINTS_TO_SAMPLE*POINTS_TO_SAMPLE*i + DOF*POINTS_TO_SAMPLE*j + DOF*k + u]
+                = fields[INDEX(X_SAMPLEINT*i, X_SAMPLEINT*j, X_SAMPLEINT*k, u)];
+            }
+      
       filedata.datasize = POINTS_TO_SAMPLE;
       dumpstate(dumper, filedata);
       filedata.fwrites++;
@@ -259,6 +258,7 @@ int main(int argc, char **argv)
     /* dump a strip of the simulation along one axis. */
     if(DUMP_STRIP)
     {
+      filedata.datasize = POINTS;
       dumpstrip(fields, filedata);
     }
 
@@ -282,8 +282,6 @@ int main(int argc, char **argv)
         g2wevolve(fields, wedge, &paq, 0, j, k);
         g2wevolve(fields, wedge, &paq, +1, j, k);
       }
-
-
       // store first peak afterimage
       #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
       LOOP2(j,k)
