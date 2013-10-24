@@ -63,8 +63,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "All options are optional; if not specified defaults will be used.\n");
         return 0;
       default:
+        fprintf(stderr, "Unrecognized option.\n");
         return 0;
     }
+  }
+
+  /* make sure FFTW will work with >1 thread: */
+  i = fftw_init_threads();
+  if(i==0)
+  {
+    printf("Error! unable to parallelize FFT calculations.\n");
+    return 1;
   }
 
   /* ensure data_dir ends with '/', unless empty string is specified. */
@@ -182,7 +191,6 @@ int main(int argc, char **argv)
       lij[s][SINDEX(i,j,k)] = 0;
     }
   }
-
 
 
   if(0 == read_initial_step)

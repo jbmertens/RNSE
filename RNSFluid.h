@@ -22,11 +22,27 @@ static simType XI = 0;
 /* get/set fluid coupling parameter. */
 static inline void setXI(simType xi)
 {
-    XI = xi;
+  XI = xi;
 }
 static inline simType getXI()
 {
-    return XI;
+  return XI;
+}
+
+
+/* Deal with n_threads. */
+static inline simType getNT();
+static inline void setNT(simType nt);
+static simType NT = 2;
+
+/* get/set fluid coupling parameter. */
+static inline void setNT(simType nt)
+{
+  NT = nt;
+}
+static inline simType getNT()
+{
+  return NT;
 }
 
 
@@ -38,11 +54,11 @@ static simType ALPHA = 0.90;
 /* get/set potential parameter. */
 static inline void setALPHA(simType alpha)
 {
-    ALPHA = alpha;
+  ALPHA = alpha;
 }
 static inline simType getALPHA()
 {
-    return ALPHA;
+  return ALPHA;
 }
 
 

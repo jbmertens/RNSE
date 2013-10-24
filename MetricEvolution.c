@@ -15,7 +15,6 @@
  */
 void store_gws(simType **lij, IOData filedata)
 {
-
   simType array_out[(int)(1.73205*(POINTS/2))+1];
   int numpoints_gw[(int)(1.73205*(POINTS/2))+1]; // Number of points in each momentum bin
   simType p[(int)(1.73205*(POINTS/2))+1];
@@ -120,7 +119,7 @@ void store_gws(simType **lij, IOData filedata)
   gzclose(datafile);
   free(filename);
   free(buffer);
-    
+
   return;
 }
 
@@ -132,14 +131,19 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 {
   int i, j, k, a, b;
   simType pz, px, py, pp, p2, p;
-  simType h, l, S, trs_RE, trs_IM;
+  simType h, l, S, trs_RE, trs_IM, kkS_RE, kkS_IM;
+  simType phat[3], k_mS_mi_RE[3], k_mS_mi_IM[3];
+
+  int threads = getNT();
 
   // evolve h_ij (the fourier transform of)
     // solving (in fourier space) d_t l = k^2 h + S
     //                            d_t h = h
+  // The traceless projection is calculated here.
 
-
-  // only evolve the transverse/traceless part:
+  // #pragma omp parallel for default(shared) \
+  //   private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
+  //   num_threads(threads)
   for(int i=0; i<POINTS; i++)
   {
     px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -150,30 +154,30 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
       {
         pz = (simType) k;
         p = sqrt(px*px + py*py + pz*pz); // p (momentum)
-        simType phat[3] = { px/p, py/p, pz/p };
+        phat[0] = px/p;
+        phat[1] = py/p;
+        phat[2] = pz/p;
 
-        // pre-calculate some stuff:          
+        // pre-calculate some stuff:   
           // Trace (S^a_a)
           trs_RE = C_RE(fSTTij[0][fSINDEX(i,j,k)]) + C_RE(fSTTij[3][fSINDEX(i,j,k)]) + C_RE(fSTTij[5][fSINDEX(i,j,k)]);
           trs_IM = C_IM(fSTTij[0][fSINDEX(i,j,k)]) + C_IM(fSTTij[3][fSINDEX(i,j,k)]) + C_IM(fSTTij[5][fSINDEX(i,j,k)]);
           // One contraction (k^m S_mi)
-          simType k_mS_mi_RE[3] = { 
-            phat[0]*C_RE(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[2][fSINDEX(i,j,k)]),
-            phat[0]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[4][fSINDEX(i,j,k)]),
-            phat[0]*C_RE(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[5][fSINDEX(i,j,k)])
-          };
-          simType k_mS_mi_IM[3] = { 
-            phat[0]*C_IM(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[2][fSINDEX(i,j,k)]),
-            phat[0]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[4][fSINDEX(i,j,k)]),
-            phat[0]*C_IM(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[5][fSINDEX(i,j,k)])
-          };
+          k_mS_mi_RE[0] = phat[0]*C_RE(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[2][fSINDEX(i,j,k)]);
+          k_mS_mi_RE[1] = phat[0]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[4][fSINDEX(i,j,k)]);
+          k_mS_mi_RE[2] = phat[0]*C_RE(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[5][fSINDEX(i,j,k)]);
+          k_mS_mi_IM[0] = phat[0]*C_IM(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[2][fSINDEX(i,j,k)]);
+          k_mS_mi_IM[1] = phat[0]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[4][fSINDEX(i,j,k)]);
+          k_mS_mi_IM[2] = phat[0]*C_IM(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[5][fSINDEX(i,j,k)]);
+
           // Two contractions (k^a k^b S_ab)
-          simType kkS_RE = phat[0]*k_mS_mi_RE[0] + phat[1]*k_mS_mi_RE[1] + phat[2]*k_mS_mi_RE[2];
-          simType kkS_IM = phat[0]*k_mS_mi_IM[0] + phat[1]*k_mS_mi_IM[1] + phat[2]*k_mS_mi_IM[2];
+          kkS_RE = phat[0]*k_mS_mi_RE[0] + phat[1]*k_mS_mi_RE[1] + phat[2]*k_mS_mi_RE[2];
+          kkS_IM = phat[0]*k_mS_mi_IM[0] + phat[1]*k_mS_mi_IM[1] + phat[2]*k_mS_mi_IM[2];
 
         for(a=1; a<=3; a++) {
           for(b=a; b<=3; b++) {
             // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
+            // only evolve the transverse/traceless part:
             C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
               (
                 0.5*(phat[a-1]*phat[b-1] - (a==b))*trs_RE
@@ -194,7 +198,9 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
   } // end i
 
   for(a=0; a<12; a++) {
-    // #pragma omp parallel for default(shared) private(i, j, k) num_threads(threads)
+    // #pragma omp parallel for default(shared) \
+    //   private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
+    //   num_threads(threads)
     for(int i=0; i<POINTS; i++)
     {
       px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -238,15 +244,23 @@ void fft_stt(simType **STTij, fftw_complex **fSTTij)
 {
   // transform STT components into fourier space
   int a;
-  fftw_plan p;
-  p = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS,
-                            STTij[0], fSTTij[0],
-                            FFTW_ESTIMATE);
+  int threads = getNT();
+
+  fftw_plan_with_nthreads(threads);
 
   // fourier transform stress-energy tensor
+  // #pragma omp parallel for default(shared) private(a) num_threads(6)
   for(a=0; a<6; a++) {
+    fftw_plan p;
+    p = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS,
+                         STTij[0], fSTTij[0],
+                         FFTW_ESTIMATE);
     fftw_execute_dft_r2c(p, STTij[a], fSTTij[a]);
+    fftw_destroy_plan(p);
   }
+
+  fftw_cleanup_threads();
+
 }
 
 

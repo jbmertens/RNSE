@@ -8,7 +8,7 @@ OBJ = $(patsubst %.c, %.o, $(SRC))
 EXEC = rnse
 
 CC_OPTS = -fopenmp
-CC_LINKS = -lm -lfftw3 -fopenmp -lhdf5
+CC_LINKS = -lm -lfftw3 -lfftw3_threads -fopenmp -lhdf5
 
 
 # Special settings for running on cwru's cluster
