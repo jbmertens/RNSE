@@ -141,9 +141,9 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
     //                            d_t h = h
   // The traceless projection is calculated here.
 
-  // #pragma omp parallel for default(shared) \
-  //   private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
-  //   num_threads(threads)
+  #pragma omp parallel for default(shared) \
+    private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
+    num_threads(threads)
   for(int i=0; i<POINTS; i++)
   {
     px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -198,9 +198,9 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
   } // end i
 
   for(a=0; a<12; a++) {
-    // #pragma omp parallel for default(shared) \
-    //   private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
-    //   num_threads(threads)
+    #pragma omp parallel for default(shared) \
+      private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
+      num_threads(threads)
     for(int i=0; i<POINTS; i++)
     {
       px = (simType) (i <= POINTS/2 ? i : i - POINTS);
