@@ -70,10 +70,17 @@ int main(int argc, char **argv)
 
   /* make sure FFTW will work with >1 thread: */
   i = fftw_init_threads();
-  if(i==0)
+  if(i == 0)
   {
     printf("Error! unable to parallelize FFT calculations.\n");
     return 1;
+  }
+  if(threads < 1)
+  {
+    printf("Error! Need to run on more than 1 thread.\n");
+    return 1;
+  } else {
+    setNT(threads);
   }
 
   /* ensure data_dir ends with '/', unless empty string is specified. */

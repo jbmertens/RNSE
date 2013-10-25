@@ -83,7 +83,7 @@ void store_gws(simType **lij, IOData filedata)
     // Converts sums to averages. (numpoints[i] should always be greater than zero.)
     if(numpoints_gw[i] > 0)
     {
-      array_out[i] = f2_gw[i]*pow((double)i,3.)/((double) numpoints_gw[i]);
+      array_out[i] = f2_gw[i]/((double) numpoints_gw[i]);
     }
     else
     {
@@ -246,16 +246,20 @@ void fft_stt(simType **STTij, fftw_complex **fSTTij)
   int a;
   int threads = getNT();
 
-  fftw_plan_with_nthreads(threads);
+  fftw_plan_with_nthreads((threads+5)/6);
 
   // fourier transform stress-energy tensor
-  // #pragma omp parallel for default(shared) private(a) num_threads(6)
+  #pragma omp parallel for default(shared) private(a) num_threads(6)
   for(a=0; a<6; a++) {
     fftw_plan p;
+    #pragma omp critical
     p = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS,
-                         STTij[0], fSTTij[0],
+                         STTij[a], fSTTij[a],
                          FFTW_ESTIMATE);
+
     fftw_execute_dft_r2c(p, STTij[a], fSTTij[a]);
+
+    #pragma omp critical
     fftw_destroy_plan(p);
   }
 
