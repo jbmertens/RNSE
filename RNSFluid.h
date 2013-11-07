@@ -15,10 +15,7 @@ void calculatequantities(PointData *paq);
 
 
 /* Deal with fluid coupling. */
-static inline simType getXI();
-static inline void setXI(simType xi);
-static simType XI = 0;
-
+extern simType XI;
 /* get/set fluid coupling parameter. */
 static inline void setXI(simType xi)
 {
@@ -30,27 +27,8 @@ static inline simType getXI()
 }
 
 
-/* Deal with n_threads. */
-static inline simType getNT();
-static inline void setNT(simType nt);
-static simType NT = 2;
-
-/* get/set fluid coupling parameter. */
-static inline void setNT(simType nt)
-{
-  NT = nt;
-}
-static inline simType getNT()
-{
-  return NT;
-}
-
-
 /* Deal with potential parameter. */
-static inline simType getALPHA();
-static inline void setALPHA(simType alpha);
-static simType ALPHA = 0.90;
-
+extern simType ALPHA;
 /* get/set potential parameter. */
 static inline void setALPHA(simType alpha)
 {
@@ -60,7 +38,6 @@ static inline simType getALPHA()
 {
   return ALPHA;
 }
-
 
 
 #endif

@@ -134,16 +134,13 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
   simType h, l, S, trs_RE, trs_IM, kkS_RE, kkS_IM;
   simType phat[3], k_mS_mi_RE[3], k_mS_mi_IM[3];
 
-  int threads = getNT();
-
   // evolve h_ij (the fourier transform of)
     // solving (in fourier space) d_t l = k^2 h + S
     //                            d_t h = h
   // The traceless projection is calculated here.
 
   #pragma omp parallel for default(shared) \
-    private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
-    num_threads(threads)
+    private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
   for(int i=0; i<POINTS; i++)
   {
     px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -199,8 +196,7 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 
   for(a=0; a<12; a++) {
     #pragma omp parallel for default(shared) \
-      private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM) \
-      num_threads(threads)
+      private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
     for(int i=0; i<POINTS; i++)
     {
       px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -219,6 +215,9 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
           } else {
             S = C_RE(fSTTij[a][fSINDEX(i,j,k)]);
           }
+
+          // FFT is not scaled by measure, so:
+          S *= dx*dx*dx;
 
           // This is RK4. Promise.
           hij[a][fSINDEX(i,j,k)] += dt*(l*(6.0 - pp*dt*dt) + dt*(-h*pp + S)*(12.0 - dt*dt*pp)/4.0)/6.0;
@@ -240,29 +239,30 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 /*
  * FFT the STT
  */
-void fft_stt(simType **STTij, fftw_complex **fSTTij)
+void fft_stt(simType **STTij, fftw_complex **fSTTij, int threads)
 {
   // transform STT components into fourier space
   int a;
-  int threads = getNT();
+  fftw_plan p[6];
 
-  fftw_plan_with_nthreads((threads+5)/6);
+  fftw_plan_with_nthreads(threads);
 
-  // fourier transform stress-energy tensor
-  #pragma omp parallel for default(shared) private(a) num_threads(6)
-  for(a=0; a<6; a++) {
-    fftw_plan p;
-    #pragma omp critical
-    p = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS,
-                         STTij[a], fSTTij[a],
-                         FFTW_ESTIMATE);
-
-    fftw_execute_dft_r2c(p, STTij[a], fSTTij[a]);
-
-    #pragma omp critical
-    fftw_destroy_plan(p);
+  for(a=0; a<6; a++)
+  {
+    p[a] = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS,
+                          STTij[a], fSTTij[a],
+                          FFTW_ESTIMATE);
   }
 
+  // fourier transform stress-energy tensor
+  // #pragma omp parallel for default(shared) private(a) num_threads(6)
+  for(a=0; a<6; a++)
+  {
+    fftw_execute_dft_r2c(p[a], STTij[a], fSTTij[a]);
+  }
+
+  for(a=0; a<6; a++)
+    fftw_destroy_plan(p[a]);
   fftw_cleanup_threads();
 
 }

@@ -1,6 +1,8 @@
 /* RNSE includes */
 #include "defines.h"
 
+simType XI = 0;
+simType ALPHA = 0.90;
 
 int main(int argc, char **argv)
 {
@@ -80,7 +82,7 @@ int main(int argc, char **argv)
     printf("Error! Need to run on more than 1 thread.\n");
     return 1;
   } else {
-    setNT(threads);
+    omp_set_num_threads(threads);
   }
 
   /* ensure data_dir ends with '/', unless empty string is specified. */
@@ -220,8 +222,10 @@ int main(int argc, char **argv)
           // spherically symmetric soliton/"bubble" solution - first order
           // approximation in vacuum energy difference
           fields[INDEX(i,j,k,4)] = 
-            tanhbubble(i, j, k, POINTS/3.0, POINTS/2.0, POINTS/2.0)
-            + tanhbubble(i, j, k, 2.0*POINTS/3.0, POINTS/2.0, POINTS/2.0);
+            tanhbubble(i, j, k, POINTS/3.0, POINTS/3.0, POINTS/3.0)
+            + tanhbubble(i, j, k, 2.0*POINTS/3.0, POINTS/3.0, POINTS/3.0)
+            + tanhbubble(i, j, k, POINTS/3.0, 2.0*POINTS/3.0, 2.0*POINTS/3.0)
+            + tanhbubble(i, j, k, 2.0*POINTS/3.0, 2.0*POINTS/3.0, 2.0*POINTS/3.0);
 
           // time-derivative of scalar field
           fields[INDEX(i,j,k,5)] = 0;
@@ -267,8 +271,11 @@ int main(int argc, char **argv)
       filedata.datasize = POINTS_TO_SAMPLE;
       dumpstate(dumper, filedata);
       filedata.fwrites++;
-    } // end write step
 
+      // also (only) store GWs at this point
+      store_gws(lij, filedata);
+
+    } // end write step
 
     /* dump a strip of the simulation along one axis. */
     if(DUMP_STRIP)
@@ -276,7 +283,6 @@ int main(int argc, char **argv)
       filedata.datasize = POINTS;
       dumpstrip(fields, filedata);
     }
-
 
 /****
  * Memory-efficient midpoint implementation, hopefully without significant slowdown.
@@ -290,7 +296,7 @@ int main(int argc, char **argv)
 
     // First: build afterimage (takes care of BC's)
       // populate wedge
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
       {
         g2wevolve(fields, wedge, &paq, -1, j, k);
@@ -298,7 +304,7 @@ int main(int argc, char **argv)
         g2wevolve(fields, wedge, &paq, +1, j, k);
       }
       // store first peak afterimage
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, 0, j, k);
@@ -308,11 +314,11 @@ int main(int argc, char **argv)
         }
       }
       // roll wedge base forward
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, 2, j, k);
       // second afterimage point
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, 1, j, k);
@@ -324,10 +330,10 @@ int main(int argc, char **argv)
 
 
     // Now: starting wedge
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, 3, j, k);
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, 2, j, k);
@@ -339,18 +345,18 @@ int main(int argc, char **argv)
     {
       
       // roll base along
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
         g2wevolve(fields, wedge, &paq, i, j, k);
 
       // store old peak back in the grid
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
         for(u=0; u<DOF; u++)
           fields[INDEX(i-2,j,k,u)] = wedge[INDEX(3,j,k,u)];
 
       // calculate new wedge peak
-      #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+      #pragma omp parallel for default(shared) private(j, k, paq)
       LOOP2(j,k)
       {
         w2pevolve(fields, wedge, &paq, i-1, j, k);
@@ -360,7 +366,7 @@ int main(int argc, char **argv)
     }
 
     // Done; store the afterimage in the fields.
-    #pragma omp parallel for default(shared) private(j, k, paq) num_threads(threads)
+    #pragma omp parallel for default(shared) private(j, k, paq)
     LOOP2(j,k)
       for(u=0; u<DOF; u++)
       {
@@ -372,12 +378,8 @@ int main(int argc, char **argv)
 /** End wedge method **/
 
     /* Evolve and output GW stuff (S_TT is calculated during evolution) */
-    fft_stt(STTij, fSTTij);
+    fft_stt(STTij, fSTTij, threads);
     h_evolve(hij, lij, fSTTij);
-    store_gws(lij, filedata);
-
-    printf(".");
-    fflush(stdout);
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < STOP_MAX)
     {

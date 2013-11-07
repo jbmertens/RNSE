@@ -13,7 +13,7 @@
 #include <fftw3.h>
 #include <getopt.h>
 #include <zlib.h>
-// #include <gsl/gsl_spline.h>
+
 
 /* CONSTANTS */
 /* potential parameters: must change the initial field configuration if these
@@ -24,15 +24,17 @@
 #define W_EOSm1     (W_EOS - 1.0)
 #define W_EOSp1     (W_EOS + 1.0)
 
-#define LOG_E     0.0  /* Log of fluid energy density */
+#define BETA      0.1  /* Ratio of energy density to well height difference */
+#define LOG_E     log(BETA*pow(sqrt(9.0-8.0*getALPHA())+3.0,2)*(sqrt(9.0-8.0*getALPHA())+3.0-4.0*getALPHA())/64.0/pow(getALPHA(),3))
+                       /* Log of fluid energy density */
 #define V_OFFSET  0.0  /* ~ VEV of false vacuum */
 
 /*1 (ln of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
 #define DOF ((long long) 6)  
 
 /* resolution parameters */
-#define SIZE    (14*R0)                         /* physical size in space */
-#define POINTS  ((long long) 256)               /* number of points on
+#define SIZE    (10*R0)                         /* physical size in space */
+#define POINTS  ((long long) 128)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
 #define dt      (dx/40.0)
@@ -45,11 +47,11 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           5          /* Maximum # of steps to run */
-#define STEPS_TO_SAMPLE     0            /* # of steps to record, undersampled */
-#define STEPS_TO_DUMP       0             /* # of steps to give a full dump of and take DHT */
-#define POINTS_TO_SAMPLE    64            /* # of points along (x-)axis to
-                                               sample.  This should evenly divide POINTS.  */
+#define MAX_STEPS           2500       /* Maximum # of steps to run */
+#define STEPS_TO_SAMPLE     250        /* # of steps to record, undersampled */
+#define STEPS_TO_DUMP       0          /* # of steps to give a full dump of and take DHT */
+#define POINTS_TO_SAMPLE    64         /* # of points along (x-)axis to
+                                          sample.  This should evenly divide POINTS.  */
 
 /* special features */
 #define STOP_CELL           -1  /* Check for negative field value (eg, bubble wall)

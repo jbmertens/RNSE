@@ -3,7 +3,7 @@
 
 void fftdump(simType **STTij, fftw_complex **fSTTij, IOData filedata)
 {
-  fft_stt(STTij, fSTTij);
+  // fft_stt(STTij, fSTTij);
 
   IOData dumpfile;
   dumpfile.data_dir = filedata.data_dir;
