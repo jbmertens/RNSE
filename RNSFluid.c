@@ -81,8 +81,6 @@ int main(int argc, char **argv)
   {
     printf("Error! Need to run on more than 1 thread.\n");
     return 1;
-  } else {
-    omp_set_num_threads(threads);
   }
 
   /* ensure data_dir ends with '/', unless empty string is specified. */
@@ -200,6 +198,11 @@ int main(int argc, char **argv)
       lij[s][SINDEX(i,j,k)] = 0;
     }
   }
+  // create fft plans for later use
+  printf("Planning to run 6 FFTs with %d threads each.\n", (threads+5)/6);
+  fftw_plan_with_nthreads((threads+5)/6);
+  fftw_plan p;
+  p = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS, STTij[0], fSTTij[0], FFTW_MEASURE);
 
 
   if(0 == read_initial_step)
@@ -378,7 +381,7 @@ int main(int argc, char **argv)
 /** End wedge method **/
 
     /* Evolve and output GW stuff (S_TT is calculated during evolution) */
-    fft_stt(STTij, fSTTij, threads);
+    fft_stt(STTij, fSTTij, p);
     h_evolve(hij, lij, fSTTij);
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < STOP_MAX)
@@ -390,6 +393,10 @@ int main(int argc, char **argv)
   }
 
   time_t time_end = time(NULL);
+
+  // cleanup some
+  fftw_destroy_plan(p);
+  fftw_cleanup_threads();
 
   // At end, dump all data from current simulation.
   filedata.datasize = POINTS;

@@ -239,31 +239,37 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 /*
  * FFT the STT
  */
-void fft_stt(simType **STTij, fftw_complex **fSTTij, int threads)
+void fft_stt(simType **STTij, fftw_complex **fSTTij, fftw_plan p)
 {
   // transform STT components into fourier space
-  int a;
-  fftw_plan p[6];
-
-  fftw_plan_with_nthreads(threads);
-
-  for(a=0; a<6; a++)
+  #pragma omp parallel sections num_threads(6)
   {
-    p[a] = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS,
-                          STTij[a], fSTTij[a],
-                          FFTW_ESTIMATE);
+    
+    #pragma omp section
+    {
+      fftw_execute_dft_r2c(p, STTij[0], fSTTij[0]);
+    }
+    #pragma omp section
+    {
+      fftw_execute_dft_r2c(p, STTij[1], fSTTij[1]);
+    }
+    #pragma omp section
+    {
+      fftw_execute_dft_r2c(p, STTij[2], fSTTij[2]);
+    }
+    #pragma omp section
+    {
+      fftw_execute_dft_r2c(p, STTij[3], fSTTij[3]);
+    }
+    #pragma omp section
+    {
+      fftw_execute_dft_r2c(p, STTij[4], fSTTij[4]);
+    }
+    #pragma omp section
+    {
+      fftw_execute_dft_r2c(p, STTij[5], fSTTij[5]);
+    }
   }
-
-  // fourier transform stress-energy tensor
-  // #pragma omp parallel for default(shared) private(a) num_threads(6)
-  for(a=0; a<6; a++)
-  {
-    fftw_execute_dft_r2c(p[a], STTij[a], fSTTij[a]);
-  }
-
-  for(a=0; a<6; a++)
-    fftw_destroy_plan(p[a]);
-  fftw_cleanup_threads();
 
 }
 
