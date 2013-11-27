@@ -25,15 +25,15 @@
 #define W_EOSp1     (W_EOS + 1.0)
 
 #define BETA      0.1  /* Ratio of energy density to well height difference */
-#define LOG_E     log(BETA*pow(sqrt(9.0-8.0*getALPHA())+3.0,2)*(sqrt(9.0-8.0*getALPHA())+3.0-4.0*getALPHA())/64.0/pow(getALPHA(),3))
-                       /* Log of fluid energy density */
-#define V_OFFSET  0.0  /* ~ VEV of false vacuum */
+#define DELTA_V  (pow(sqrt(9.0-8.0*getALPHA())+3.0,2)*(sqrt(9.0-8.0*getALPHA())+3.0-4.0*getALPHA())/64.0/pow(getALPHA(),3))
+#define LOG_E     log(BETA*DELTA_V)  /* Log of fluid energy density */
+#define V_OFFSET  0.0 /* ~ VEV of true vacuum*/
 
 /*1 (ln of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
 #define DOF ((long long) 6)  
 
 /* resolution parameters */
-#define SIZE    (10*R0)                         /* physical size in space */
+#define SIZE    (18*R0)                         /* physical size in space */
 #define POINTS  ((long long) 128)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)

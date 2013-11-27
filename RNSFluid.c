@@ -192,11 +192,13 @@ int main(int argc, char **argv)
   {
     hij[s] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
     lij[s] = (simType *) malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(simType)));
-    LOOP3(i,j,k)
-    {
-      hij[s][SINDEX(i,j,k)] = 0;
-      lij[s][SINDEX(i,j,k)] = 0;
-    }
+    for(i=0; i<POINTS; i++)
+      for(j=0; j<POINTS; j++)
+        for(k=0; k<=POINTS/2; k++)
+        {
+          hij[s][fSINDEX(i,j,k)] = 0;
+          lij[s][fSINDEX(i,j,k)] = 0;
+        }
   }
   // create fft plans for later use
   printf("Planning to run 6 FFTs with %d threads each.\n", (threads+5)/6);
@@ -240,6 +242,68 @@ int main(int argc, char **argv)
   }
 
 
+// DEBUG - Initial S_TT state ----------------------------------------------
+for(i=0; i<POINTS; i++)
+  for(j=0; j<POINTS; j++)
+    for(k=0; k<POINTS; k++)
+    {
+      // Field data near working point
+      for(n=0; n<DOF; n++)
+        paq.fields[n] = fields[INDEX(i,j,k,n)];
+      // move values from heap to stack (cut cache misses)
+      for(n=0; n<DOF; n++)
+        paq.adjacentFields[0][n] = fields[INDEX(i+1,j,k,n)];
+      for(n=0; n<DOF; n++)
+        paq.adjacentFields[3][n] = fields[INDEX(i-1,j,k,n)];
+      for(n=0; n<DOF; n++)
+        paq.adjacentFields[1][n] = fields[INDEX(i,j+1,k,n)];
+      for(n=0; n<DOF; n++)
+        paq.adjacentFields[4][n] = fields[INDEX(i,j-1,k,n)];
+      for(n=0; n<DOF; n++)
+        paq.adjacentFields[2][n] = fields[INDEX(i,j,k+1,n)];
+      for(n=0; n<DOF; n++)
+        paq.adjacentFields[5][n] = fields[INDEX(i,j,k-1,n)];
+
+      // Around edges (for laplacian; field values only)
+      paq.adjacentEdges[0] = fields[INDEX(i+1,j+1,k,4)];
+      paq.adjacentEdges[1] = fields[INDEX(i+1,j-1,k,4)];
+      paq.adjacentEdges[2] = fields[INDEX(i+1,j,k+1,4)];
+      paq.adjacentEdges[3] = fields[INDEX(i+1,j,k-1,4)];
+      paq.adjacentEdges[4] = fields[INDEX(i-1,j+1,k,4)];
+      paq.adjacentEdges[5] = fields[INDEX(i-1,j-1,k,4)];
+      paq.adjacentEdges[6] = fields[INDEX(i-1,j,k+1,4)];
+      paq.adjacentEdges[7] = fields[INDEX(i-1,j,k-1,4)];
+      paq.adjacentEdges[8] = fields[INDEX(i,j+1,k+1,4)];
+      paq.adjacentEdges[9] = fields[INDEX(i,j+1,k-1,4)];
+      paq.adjacentEdges[10] = fields[INDEX(i,j-1,k+1,4)];
+      paq.adjacentEdges[11] = fields[INDEX(i,j-1,k-1,4)];
+
+      // calculate quantities used by evolution functions
+      calculatequantities(&paq);
+
+      set_stt(&paq, STTij, i, j, k);
+    }
+
+
+printf("l init is %g\n", lij[0][fSINDEX(1,1,1)]);
+
+fft_stt(STTij, fSTTij, p);
+
+printf("dt is %g\n", dt);
+printf("dx is %g\n", dx);
+printf("STT at pt is %g\n", STTij[0][SINDEX(1,1,1)]);
+printf("Re fSTT at pt 111 is %g\n", C_RE(fSTTij[0][fSINDEX(1,1,1)]));
+
+h_evolve(hij, lij, fSTTij);
+
+printf("Re lij at pt is %g\n", lij[0][fSINDEX(1,1,1)]);
+
+
+store_gws(lij, filedata);
+return 0;
+// END DEBUG -----------------------------------------------------------------
+
+
   /* record simulation time / wall clock time */
   time_t time_start = time(NULL);
 
@@ -259,7 +323,7 @@ int main(int argc, char **argv)
     // }
 
     /* write (possibly undersampled) data if needed */
-    if(s % T_SAMPLEINT == 0)
+    if(s % T_SAMPLEINT == 0 || s==1) // output initial data used
     {
       // use dumper array to store an undersampled array of data:
       for(i=0; i<POINTS_TO_SAMPLE; i++)
@@ -511,11 +575,6 @@ static inline simType ddtfield_evfn(PointData *paq)
   );
 }
 
-
-/**
- * Note: these functions are now specific to the midpoint method.
- * Roll back to 0f66228 for old, non-wedge code.
- */
 
 /*
  * Calculate commonly used quantities at each point in the simulation.  Quantities are contained within a

@@ -137,8 +137,9 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
   // evolve h_ij (the fourier transform of)
     // solving (in fourier space) d_t l = k^2 h + S
     //                            d_t h = h
-  // The traceless projection is calculated here.
 
+
+  // The transverse/traceless projection of S is calculated here.
   #pragma omp parallel for default(shared) \
     private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
   for(int i=0; i<POINTS; i++)
@@ -150,7 +151,9 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
       for(int k=0; k<POINTS/2+1; k++)
       {
         pz = (simType) k;
-        p = sqrt(px*px + py*py + pz*pz); // p (momentum)
+
+        // p (momentum)
+        p = (px == 0 && py == 0 && pz == 0 ? 1.0 : sqrt(px*px + py*py + pz*pz));
         phat[0] = px/p;
         phat[1] = py/p;
         phat[2] = pz/p;
@@ -177,15 +180,15 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
             // only evolve the transverse/traceless part:
             C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
               (
-                0.5*(phat[a-1]*phat[b-1] - (a==b))*trs_RE
-                + 0.5*(phat[a-1]*phat[b-1] + (a==b))*kkS_RE
+                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_RE
+                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_RE
                 - (phat[a-1]*k_mS_mi_RE[b-1] + phat[b-1]*k_mS_mi_RE[a-1])
               );
             C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
               (
-                0.5*(phat[a-1]*phat[b-1] - (a==b))*trs_RE
-                + 0.5*(phat[a]*phat[b-1] + (a==b))*kkS_RE
-                - (phat[a-1]*k_mS_mi_RE[b-1] + phat[b-1]*k_mS_mi_RE[a-1])
+                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_IM
+                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_IM
+                - (phat[a-1]*k_mS_mi_IM[b-1] + phat[b-1]*k_mS_mi_IM[a-1])
               );
           }
         }
@@ -194,9 +197,17 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
     } // end j
   } // end i
 
+  // No zero mode
+  for(a=1; a<=3; a++) {
+    for(b=a; b<=3; b++) {
+      C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(0,0,0)]) = 0;
+      C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(0,0,0)]) = 0;
+    }
+  }
+
   for(a=0; a<12; a++) {
     #pragma omp parallel for default(shared) \
-      private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
+      private(i,j,k,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
     for(int i=0; i<POINTS; i++)
     {
       px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -216,17 +227,16 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
             S = C_RE(fSTTij[a][fSINDEX(i,j,k)]);
           }
 
-          // FFT is not scaled by measure, so:
+          // FFT is not yet scaled by measure, so:
           S *= dx*dx*dx;
+
+          if(i==1&&j==1&&k==1) {
+            printf(" a=%d/l=%g/h=%g/S=%g  \n", a,l,h,S);
+          }
 
           // This is RK4. Promise.
           hij[a][fSINDEX(i,j,k)] += dt*(l*(6.0 - pp*dt*dt) + dt*(-h*pp + S)*(12.0 - dt*dt*pp)/4.0)/6.0;
           lij[a][fSINDEX(i,j,k)] += dt*(6.0*S - 3.0*pp*l*dt + pp*pp*l*dt*dt*dt/4.0 - h*pp*(6.0 - pp*dt*dt))/6.0;
-
-          // Euler
-          // hij[a][fSINDEX(i,j,k)] += dt*l;
-          // lij[a][fSINDEX(i,j,k)] += dt*(pow(dx,3)*S - h*pp);
-
         }
       }
     }
@@ -270,7 +280,6 @@ void fft_stt(simType **STTij, fftw_complex **fSTTij, fftw_plan p)
       fftw_execute_dft_r2c(p, STTij[5], fSTTij[5]);
     }
   }
-
 }
 
 
@@ -280,26 +289,22 @@ void fft_stt(simType **STTij, fftw_complex **fSTTij, fftw_plan p)
  */
 void set_stt(PointData *paq, simType **STTij, int i, int j, int k)
 {
-  // S_ij = T_ij - 1/3 \delta_ij * T_k^k.
-  //      = (e+p)U^iU^j + d^ifd^jf - 1/3(\delta_ij)*( trace of previous terms )
-  // The above is traceless, but not yet transverse.
-
-  simType dafdaf = paq->gradients[1][4]*paq->gradients[1][4]
-                   + paq->gradients[2][4]*paq->gradients[2][4]
-                   + paq->gradients[3][4]*paq->gradients[3][4];
+  // S_ij = T_ij
+  //      = (e+p)U^iU^j + d^if*d^jf
+  // This calculation is not traceless or transverse - that projection will be done later.
+  // However, we don't calculate clearly traceful parts (eg, X*\delta_ij pieces) as a small optimization.
 
   int a, b;
   for(a=1; a<=3; a++) {
     for(b=a; b<=3; b++) {
       // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
       STTij[(7-a)*a/2-4+b][SINDEX(i,j,k)] =
-          paq->gradients[a][4] * paq->gradients[b][4]
-          - (a==b)*(dafdaf/2.0 + V(paq->fields[4]) - W_EOS*exp(paq->fields[0]))
-          + W_EOSp1 * exp(paq->fields[0]) * paq->fields[a] * paq->fields[b];
+          paq->gradients[a][4] * paq->gradients[b][4]  // (d^af * d^bf)
+          + W_EOSp1 * exp(paq->fields[0]) * paq->fields[a] * paq->fields[b];  // (1+w)(e)U^aU^b
     }
   }
 
-  // project into transverse plane, and subtract trace - this is done during actual evolution.
+  // project into transverse plane, and subtract remaining trace - this is done during actual evolution.
 
   return;
 }

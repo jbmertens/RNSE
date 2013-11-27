@@ -200,7 +200,6 @@ static inline simType sp_tr(simType t1[4][DOF])
  */
 static inline simType dV(simType phi)
 {
-  // return 0;
   return phi + phi*(3.0/2.0*phi + getALPHA()/2.0*phi*phi);
 }
 
@@ -211,7 +210,9 @@ static inline simType dV(simType phi)
 static inline simType V(simType phi)
 {
   // return 0;
-  return phi*(phi/2.0 + phi*phi/2.0 + getALPHA()/8.0*phi*phi*phi) + V_OFFSET;
+  return phi*(phi/2.0 + phi*phi/2.0 + getALPHA()/8.0*phi*phi*phi)
+         + DELTA_V
+         + V_OFFSET;
 }
 
 
