@@ -240,69 +240,7 @@ int main(int argc, char **argv)
   {
     readstate(fields, filedata);
   }
-
-
-// DEBUG - Initial S_TT state ----------------------------------------------
-for(i=0; i<POINTS; i++)
-  for(j=0; j<POINTS; j++)
-    for(k=0; k<POINTS; k++)
-    {
-      // Field data near working point
-      for(n=0; n<DOF; n++)
-        paq.fields[n] = fields[INDEX(i,j,k,n)];
-      // move values from heap to stack (cut cache misses)
-      for(n=0; n<DOF; n++)
-        paq.adjacentFields[0][n] = fields[INDEX(i+1,j,k,n)];
-      for(n=0; n<DOF; n++)
-        paq.adjacentFields[3][n] = fields[INDEX(i-1,j,k,n)];
-      for(n=0; n<DOF; n++)
-        paq.adjacentFields[1][n] = fields[INDEX(i,j+1,k,n)];
-      for(n=0; n<DOF; n++)
-        paq.adjacentFields[4][n] = fields[INDEX(i,j-1,k,n)];
-      for(n=0; n<DOF; n++)
-        paq.adjacentFields[2][n] = fields[INDEX(i,j,k+1,n)];
-      for(n=0; n<DOF; n++)
-        paq.adjacentFields[5][n] = fields[INDEX(i,j,k-1,n)];
-
-      // Around edges (for laplacian; field values only)
-      paq.adjacentEdges[0] = fields[INDEX(i+1,j+1,k,4)];
-      paq.adjacentEdges[1] = fields[INDEX(i+1,j-1,k,4)];
-      paq.adjacentEdges[2] = fields[INDEX(i+1,j,k+1,4)];
-      paq.adjacentEdges[3] = fields[INDEX(i+1,j,k-1,4)];
-      paq.adjacentEdges[4] = fields[INDEX(i-1,j+1,k,4)];
-      paq.adjacentEdges[5] = fields[INDEX(i-1,j-1,k,4)];
-      paq.adjacentEdges[6] = fields[INDEX(i-1,j,k+1,4)];
-      paq.adjacentEdges[7] = fields[INDEX(i-1,j,k-1,4)];
-      paq.adjacentEdges[8] = fields[INDEX(i,j+1,k+1,4)];
-      paq.adjacentEdges[9] = fields[INDEX(i,j+1,k-1,4)];
-      paq.adjacentEdges[10] = fields[INDEX(i,j-1,k+1,4)];
-      paq.adjacentEdges[11] = fields[INDEX(i,j-1,k-1,4)];
-
-      // calculate quantities used by evolution functions
-      calculatequantities(&paq);
-
-      set_stt(&paq, STTij, i, j, k);
-    }
-
-
-printf("l init is %g\n", lij[0][fSINDEX(1,1,1)]);
-
-fft_stt(STTij, fSTTij, p);
-
-printf("dt is %g\n", dt);
-printf("dx is %g\n", dx);
-printf("STT at pt is %g\n", STTij[0][SINDEX(1,1,1)]);
-printf("Re fSTT at pt 111 is %g\n", C_RE(fSTTij[0][fSINDEX(1,1,1)]));
-
-h_evolve(hij, lij, fSTTij);
-
-printf("Re lij at pt is %g\n", lij[0][fSINDEX(1,1,1)]);
-
-
-store_gws(lij, filedata);
-return 0;
-// END DEBUG -----------------------------------------------------------------
-
+  
 
   /* record simulation time / wall clock time */
   time_t time_start = time(NULL);

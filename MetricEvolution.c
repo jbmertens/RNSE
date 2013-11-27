@@ -230,10 +230,6 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
           // FFT is not yet scaled by measure, so:
           S *= dx*dx*dx;
 
-          if(i==1&&j==1&&k==1) {
-            printf(" a=%d/l=%g/h=%g/S=%g  \n", a,l,h,S);
-          }
-
           // This is RK4. Promise.
           hij[a][fSINDEX(i,j,k)] += dt*(l*(6.0 - pp*dt*dt) + dt*(-h*pp + S)*(12.0 - dt*dt*pp)/4.0)/6.0;
           lij[a][fSINDEX(i,j,k)] += dt*(6.0*S - 3.0*pp*l*dt + pp*pp*l*dt*dt*dt/4.0 - h*pp*(6.0 - pp*dt*dt))/6.0;
