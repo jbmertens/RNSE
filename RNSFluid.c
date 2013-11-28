@@ -1,7 +1,7 @@
 /* RNSE includes */
 #include "defines.h"
 
-simType XI = 0;
+simType XI = 0.0;
 simType ALPHA = 0.90;
 
 int main(int argc, char **argv)
@@ -240,7 +240,7 @@ int main(int argc, char **argv)
   {
     readstate(fields, filedata);
   }
-  
+
 
   /* record simulation time / wall clock time */
   time_t time_start = time(NULL);
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
     // }
 
     /* write (possibly undersampled) data if needed */
-    if(s % T_SAMPLEINT == 0 || s==1) // output initial data used
+    if(s % T_SAMPLEINT == 0) // output initial data used
     {
       // use dumper array to store an undersampled array of data:
       for(i=0; i<POINTS_TO_SAMPLE; i++)

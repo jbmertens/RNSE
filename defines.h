@@ -37,7 +37,7 @@
 #define POINTS  ((long long) 128)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/40.0)
+#define dt      (dx/30.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
@@ -86,6 +86,8 @@
 #define C_RE(c) ((c)[0])
 #define C_IM(c) ((c)[1])
 #define pw2(x) ((x)*(x))
+
+#define M_PI 3.14159265358979323846
 
 /* TYPEDEFS */
 /* Precision/format we'd like to use for this simulation: */

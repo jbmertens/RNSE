@@ -31,7 +31,7 @@ void store_gws(simType **lij, IOData filedata)
     numpoints_gw[i] = 0;
   }
     
-  // Perform average over all angles here.
+  // Perform average over all angles here (~integral d\Omega).
   for(i=0; i<POINTS; i++)
   {
     px = (i<=POINTS/2 ? i : i-POINTS);
@@ -78,12 +78,14 @@ void store_gws(simType **lij, IOData filedata)
     }
   }
       
+  // when also multiplied by 'i^3' in the following loop, this is \Omega_gw * h^2.
+  int O_gw_scale = 8.0*pow(10.0,-6)*pow(2.0*M_PI/SIZE,3)*BETA*BETA/DELTA_V/DELTA_V/pow(SIZE,5);
   for(i=0; i<numbins_gw; i++)
   {
     // Converts sums to averages. (numpoints[i] should always be greater than zero.)
     if(numpoints_gw[i] > 0)
     {
-      array_out[i] = f2_gw[i]/((double) numpoints_gw[i]);
+      array_out[i] = i*i*i*O_gw_scale*f2_gw[i]/((double) numpoints_gw[i]);
     }
     else
     {
@@ -153,10 +155,12 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
         pz = (simType) k;
 
         // p (momentum)
-        p = (px == 0 && py == 0 && pz == 0 ? 1.0 : sqrt(px*px + py*py + pz*pz));
+        // nan when p=0... oh well.
+        p = sqrt(px*px + py*py + pz*pz);
         phat[0] = px/p;
         phat[1] = py/p;
         phat[2] = pz/p;
+
 
         // pre-calculate some stuff:   
           // Trace (S^a_a)
@@ -217,7 +221,8 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
         for(int k=0; k<POINTS/2+1; k++)
         {
           pz = (simType) k;
-          pp = (px*px + py*py + pz*pz); // p (momentum)
+
+          pp = pow(2.0*M_PI/SIZE, 2)*(px*px + py*py + pz*pz); // k^2; k ~ 2pi/L * i|j|k
           h = hij[a][fSINDEX(i,j,k)];
           l = lij[a][fSINDEX(i,j,k)];
 
