@@ -227,10 +227,8 @@ int main(int argc, char **argv)
           // spherically symmetric soliton/"bubble" solution - first order
           // approximation in vacuum energy difference
           fields[INDEX(i,j,k,4)] = 
-            tanhbubble(i, j, k, POINTS/3.0, POINTS/3.0, POINTS/3.0)
-            + tanhbubble(i, j, k, 2.0*POINTS/3.0, POINTS/3.0, POINTS/3.0)
-            + tanhbubble(i, j, k, POINTS/3.0, 2.0*POINTS/3.0, 2.0*POINTS/3.0)
-            + tanhbubble(i, j, k, 2.0*POINTS/3.0, 2.0*POINTS/3.0, 2.0*POINTS/3.0);
+            tanhbubble(i, j, k, POINTS/3.0, POINTS/2.0, POINTS/2.0)
+            + tanhbubble(i, j, k, 2.0*POINTS/3.0, POINTS/2.0, POINTS/2.0);
 
           // time-derivative of scalar field
           fields[INDEX(i,j,k,5)] = 0;
@@ -487,6 +485,9 @@ static inline simType fluid_evfn(PointData *paq, int u)
       sumvt(paq->fields, paq->gradients, 1, u) + W_EOS / W_EOSp1 * paq->gradients[u][0]
       ) / paq->ut
     + paq->Ji[u]
+
+    // exp. artificial viscosity term
+    + paq->visc[u]
   );
 }
 
@@ -558,6 +559,9 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // calculate quantities used by evolution functions
   calculatequantities(paq);
+  for(n=1; n<=3; n++) {
+    paq->visc[n] = 0.0; // (coeff)*visc(paq, n);
+  }
 
   // [EVOLVE GRID TO WEDGE BASE]
   // energy density
@@ -612,6 +616,9 @@ void w2pevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // calculate quantities used by evolution functions
   calculatequantities(paq);
+  for(n=1; n<=3; n++) {
+    paq->visc[n] = 0;
+  }
 
   // [EVOLVE WEDGE BASE TO PEAK]
   // energy density

@@ -37,7 +37,7 @@
 #define POINTS  ((long long) 128)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/30.0)
+#define dt      (dx/20.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
@@ -47,8 +47,8 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           2500       /* Maximum # of steps to run */
-#define STEPS_TO_SAMPLE     250        /* # of steps to record, undersampled */
+#define MAX_STEPS           1000       /* Maximum # of steps to run */
+#define STEPS_TO_SAMPLE     50         /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0          /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    64         /* # of points along (x-)axis to
                                           sample.  This should evenly divide POINTS.  */
@@ -113,6 +113,8 @@ typedef struct {
   /* Source terms */
   simType ji[4];
   simType Ji[4];
+
+  simType visc[4];
 
   /* sums */
   simType uudu;

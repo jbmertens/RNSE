@@ -20,6 +20,8 @@ static inline simType sp_tr(simType t1[4][DOF]);
 static inline simType derivative(PointData *paq, int ddim, int dim);
 static inline simType lapl(PointData *paq);
 
+static inline simType visc(PointData *paq, int u);
+
 /* potential function */
 static inline simType V(simType phi);
 static inline simType dV(simType phi);
@@ -78,40 +80,6 @@ static inline simType derivative(PointData *paq, int ddim /* direction of deriva
       return (paq->adjacentFields[2][dim] - paq->adjacentFields[5][dim])/2/dx;
   }
 
-  // Try out alternative differences - prefferentially take a handed derivative.  This
-  // is to help prevent instabilities from forming.
-
-  // simType nvel = 0.0;
-  // if(ddim <= 3) {
-  //   simType mf = 10.0*paq->fields[ddim];
-  //   nvel = mf / sqrt(1.0 + mf*mf);
-  // } else {
-  //   if(paq->fields[5] > 0) {
-  //     nvel = 1.0;
-  //   } else if(paq->fields[5] < 0) {
-  //     nvel = -1.0;
-  //   }
-  // }
-
-  // switch(ddim)
-  // {
-  //   case 1:
-  //     return (
-  //             (1.0 - nvel)*(paq->adjacentFields[0][dim] - paq->fields[dim])
-  //             + (1.0 + nvel)*(paq->fields[dim] - paq->adjacentFields[3][dim])
-  //           )/2/dx;
-  //   case 2:
-  //     return (
-  //             (1.0 - nvel)*(paq->adjacentFields[1][dim] - paq->fields[dim])
-  //             + (1.0 + nvel)*(paq->fields[dim] - paq->adjacentFields[4][dim])
-  //           )/2/dx;
-  //   case 3:
-  //     return (
-  //             (1.0 - nvel)*(paq->adjacentFields[2][dim] - paq->fields[dim])
-  //             + (1.0 + nvel)*(paq->fields[dim] - paq->adjacentFields[5][dim])
-  //           )/2/dx;
-  // }
-
   /* XXX */
   return 0;
 }
@@ -141,6 +109,15 @@ static inline simType lapl(PointData *paq)
   )/6.0/dx/dx;
 }
 
+
+static inline simType visc(PointData *paq, int u)
+{
+  return (
+      paq->adjacentFields[0][u] + paq->adjacentFields[1][u] + paq->adjacentFields[2][u]
+      + paq->adjacentFields[3][u] + paq->adjacentFields[4][u] + paq->adjacentFields[5][u]
+      - 6.0*paq->fields[u]
+  )/dx/dx;
+}
 
 
 /*

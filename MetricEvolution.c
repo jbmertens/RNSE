@@ -79,7 +79,7 @@ void store_gws(simType **lij, IOData filedata)
   }
       
   // when also multiplied by 'i^3' in the following loop, this is \Omega_gw * h^2.
-  int O_gw_scale = 8.0*pow(10.0,-6)*pow(2.0*M_PI/SIZE,3)*BETA*BETA/DELTA_V/DELTA_V/pow(SIZE,5);
+  simType O_gw_scale = 8.0*pow(10.0,-6)*pow(2.0*M_PI/SIZE,3)*BETA*BETA/DELTA_V/DELTA_V/pow(SIZE,5);
   for(i=0; i<numbins_gw; i++)
   {
     // Converts sums to averages. (numpoints[i] should always be greater than zero.)
@@ -305,7 +305,7 @@ void set_stt(PointData *paq, simType **STTij, int i, int j, int k)
     }
   }
 
-  // project into transverse plane, and subtract remaining trace - this is done during actual evolution.
+  // project into transverse plane, and subtract remaining trace - done after FFT / during evolution.
 
   return;
 }
