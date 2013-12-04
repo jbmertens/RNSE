@@ -1,0 +1,111 @@
+
+sols = {};
+\[Alpha] = 0.45;
+res = 128;
+nb = 6;
+
+R0 = 1/(1 - \[Alpha])
+s = 18 R0;
+spacing = 5 R0;
+ModDistance[u_, v_] := 
+ Sqrt[Total[(Mod[Min[Abs[(#1 - #2) {1, 1, 1} + {0, s, -s}]], 
+       s] & @@@ ({u, v}\[Transpose]))^2]]
+
+V[\[Phi]_, \[Alpha]_] := \[Phi]^2/2 + \[Phi]^3/2 + \[Alpha] \[Phi]^4/8;
+
+SetParams[] := (
+   size = 1000;
+   xmin = 10^-100; 
+   xmax =  12 1/(1 - \[Alpha]); \[Delta]x = (xmax - xmin)/size;
+   xgrid = Table[x, {x, xmax, xmin, -\[Delta]x}];
+   
+   revstep = \[Phi]m /. 
+     Solve[(\[Phi]p + \[Phi]m - 2 \[Phi])/\[Delta]x^2 + 
+         2/\[Rho] (\[Phi]p - \[Phi]m)/(2 \[Delta]x) - 
+         D[V[\[Phi], \[Alpha]], \[Phi]] == 0, \[Phi]m][[1]];
+   fevstep = \[Phi]p /. 
+     Solve[(\[Phi]p + \[Phi]m - 2 \[Phi])/\[Delta]x^2 + 
+         2/\[Rho] (\[Phi]p - \[Phi]m)/(2 \[Delta]x) - 
+         D[V[\[Phi], \[Alpha]], \[Phi]] == 0, \[Phi]p][[1]];
+   RGetSolution[\[Delta]_] := (
+     \[Phi]sol = SetPrecision[{0, \[Delta]}, precision];
+     Do[
+      If[Abs[\[Phi]sol[[-1]]] > 10^10, 0;, AppendTo[
+         \[Phi]sol,
+         N[(revstep /. {\[Phi] -> \[Phi]sol[[-1]], \[Phi]p -> \
+\[Phi]sol[[-2]], \[Rho] -> xgrid[[i]]}), precision]
+         ]
+        ];, {i, Length[xgrid] - 1}
+      ];
+     Return[\[Phi]sol];
+     );
+   FGetSolution[g_, \[Delta]_] := (
+     \[Phi]sol = SetPrecision[{g, g + \[Delta]}, precision];
+     Do[
+      If[Abs[\[Phi]sol[[-1]]] > 10^10, 0;, AppendTo[
+         \[Phi]sol,
+         N[(fevstep /. {\[Phi] -> \[Phi]sol[[-1]], \[Phi]m -> \
+\[Phi]sol[[-2]], \[Rho] -> xgrid[[-i]]}), precision]
+         ]
+        ];, {i, Length[xgrid] - 1}
+      ];
+     Return[\[Phi]sol];
+     );
+   );
+SetParams[];
+
+GetSol[] := (
+   precision = 800;
+   tol = 10^-450;
+   maxiter = 1000; iter = 0;
+   \[Delta]min = 0;
+   \[Delta]max = -10^-1;
+   
+   (* phase 1: get near the solution - 
+   find where the derivative flips sign *)
+   
+   While[Round[\[Delta]max, 10 tol] != Round[\[Delta]min, 10 tol] && 
+     iter < maxiter, (
+     \[Delta]guess = (\[Delta]max + \[Delta]min)/2;
+     (* look at derivative *)
+     \[Phi]der = (#[[-2]] - #[[-3]]) &@
+       RGetSolution[\[Delta]guess];
+     If[\[Phi]der > 0,
+      \[Delta]max = \[Delta]guess;,
+      \[Delta]min = \[Delta]guess;
+      ];
+     iter++;
+     )];
+   Print[N[{\[Delta]min, \[Delta]max, \[Delta]guess, iter, \[Phi]der}]]
+   
+   );
+
+bubblefn = 
+  Interpolation[
+   N[Join[{{0, \[Phi]sol[[-2]]}}, 
+     Transpose[{xgrid[[1 ;; Length[\[Phi]sol] - 2]], \[Phi]sol[[
+        1 ;; -3]]}], {{1000, \[Phi]sol[[1]]}}]]];
+
+SetParams[];
+GetSol[];
+
+points = {RandomReal[{0, s}, 3]};
+While[Length[points] < nb,
+ p = RandomReal[{0, s}, 3];
+ If[Min[ModDistance[#, p] & /@ points] > spacing, AppendTo[points, p]];
+ ]
+
+quarterbubble =
+  Table[bubblefn[Sqrt[x^2 + y^2 + z^2]], {x, 0, s/2 - s/res, 
+    s/res}, {y, 0, s/2 - s/res, s/res}, {z, 0, s/2 - s/res, s/res}];
+
+GridMirror[grid_, level_] := Join[Reverse[grid, level], grid, level];
+
+fullbubble = 
+  GridMirror[GridMirror[GridMirror[quarterbubble, 1], 2], 3];
+allbubbles = 
+  Total[RotateRight[fullbubble, Round[#/s*res]] & /@ points];
+
+Export["INITIAL_a-" <> ToString[N[\[Alpha], 2]] <> "_SIZE-" <> 
+   ToString[Round[s/R0]] <> "R0_RES-" <> ToString[res] <> 
+   "_BUBBLES-" <> ToString[Length[points]] <> ".h5", allbubbles];

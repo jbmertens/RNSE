@@ -559,8 +559,9 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // calculate quantities used by evolution functions
   calculatequantities(paq);
+  simType vel = sqrt(pow(paq->fields[1],2)+pow(paq->fields[2],2)+pow(paq->fields[3],2));
   for(n=1; n<=3; n++) {
-    paq->visc[n] = 0.0; // (coeff)*visc(paq, n);
+    paq->visc[n] = -10.0*vel*visc(paq, n);
   }
 
   // [EVOLVE GRID TO WEDGE BASE]
