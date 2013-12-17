@@ -207,6 +207,14 @@ int main(int argc, char **argv)
   p = fftw_plan_dft_r2c_3d(POINTS, POINTS, POINTS, STTij[0], fSTTij[0], FFTW_MEASURE);
 
 
+  /* Power Computations */
+  // storage space for computing power spectra of fields/fluid
+  simType *onefield;
+  fftw_complex *fonefield;
+  onefield = (simType *) malloc(GRID_STORAGE * ((long long) sizeof(simType)));
+  fonefield = (fftw_complex *) fftw_malloc(POINTS*POINTS*(POINTS/2+1) * ((long long) sizeof(fftw_complex)));
+
+
   if(0 == read_initial_step)
   {
     /* initialize data in static bubble configuration */
@@ -278,7 +286,16 @@ int main(int argc, char **argv)
       // also (only) store GWs at this point
       store_gws(lij, filedata);
 
-    } // end write step
+      // store energy density fft
+      for(i=0; i<POINTS; i++)
+        for(j=0; j<POINTS; j++)
+          for(k=0; k<POINTS; k++)
+          {
+            onefield[SINDEX(i, j, k)] = fields[INDEX(i, j, k, 0)];
+          }
+      powerdump(onefield, fonefield, p, filedata);
+
+    } // end write data
 
     /* dump a strip of the simulation along one axis. */
     if(DUMP_STRIP)
@@ -485,9 +502,6 @@ static inline simType fluid_evfn(PointData *paq, int u)
       sumvt(paq->fields, paq->gradients, 1, u) + W_EOS / W_EOSp1 * paq->gradients[u][0]
       ) / paq->ut
     + paq->Ji[u]
-
-    // exp. artificial viscosity term
-    + paq->visc[u]
   );
 }
 
@@ -559,18 +573,26 @@ void g2wevolve(simType *grid, simType *wedge, PointData *paq, int i, int j, int 
 
   // calculate quantities used by evolution functions
   calculatequantities(paq);
-  simType vel = sqrt(pow(paq->fields[1],2)+pow(paq->fields[2],2)+pow(paq->fields[3],2));
-  for(n=1; n<=3; n++) {
-    paq->visc[n] = -10.0*vel*visc(paq, n);
+
+  for(n=0; n<=3; n++)
+  {
+    if(abs(paq->fields[n]) < 0.01)
+    {
+      paq->visc[n] = 0;//(8.0*M_PI*M_PI*dt/SIZE/SIZE)*visc(paq, n)/paq->fields[n];
+    }
+    else
+    {
+     paq->visc[n] = 0; 
+    }
   }
 
   // [EVOLVE GRID TO WEDGE BASE]
   // energy density
-   wedge[WINDEX(i,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*0.5*energy_evfn(paq);
+   wedge[WINDEX(i,j,k,0)] = grid[INDEX(i,j,k,0)] + dt*0.5*energy_evfn(paq) + paq->visc[0];
   // fluid
-   wedge[WINDEX(i,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*0.5*fluid_evfn(paq, 1);
-   wedge[WINDEX(i,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*0.5*fluid_evfn(paq, 2);
-   wedge[WINDEX(i,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*0.5*fluid_evfn(paq, 3);
+   wedge[WINDEX(i,j,k,1)] = grid[INDEX(i,j,k,1)] + dt*0.5*fluid_evfn(paq, 1) + paq->visc[0];
+   wedge[WINDEX(i,j,k,2)] = grid[INDEX(i,j,k,2)] + dt*0.5*fluid_evfn(paq, 2) + paq->visc[0];
+   wedge[WINDEX(i,j,k,3)] = grid[INDEX(i,j,k,3)] + dt*0.5*fluid_evfn(paq, 3) + paq->visc[0];
   // field
    wedge[WINDEX(i,j,k,4)] = grid[INDEX(i,j,k,4)] + dt*0.5*field_evfn(paq);
   // field derivative

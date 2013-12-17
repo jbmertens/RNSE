@@ -47,8 +47,8 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           1000       /* Maximum # of steps to run */
-#define STEPS_TO_SAMPLE     50         /* # of steps to record, undersampled */
+#define MAX_STEPS           10000       /* Maximum # of steps to run */
+#define STEPS_TO_SAMPLE     250         /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0          /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    64         /* # of points along (x-)axis to
                                           sample.  This should evenly divide POINTS.  */
