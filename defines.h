@@ -26,7 +26,7 @@
 
 #define BETA      0.1  /* Ratio of energy density to well height difference */
 #define DELTA_V  (pow(sqrt(9.0-8.0*getALPHA())+3.0,2)*(sqrt(9.0-8.0*getALPHA())+3.0-4.0*getALPHA())/64.0/pow(getALPHA(),3))
-#define LOG_E     log(BETA*DELTA_V)  /* Log of fluid energy density */
+#define LOG_E     log(DELTA_V/BETA)  /* Log of fluid energy density */
 #define V_OFFSET  0.0 /* ~ VEV of true vacuum*/
 
 /*1 (ln of) fluid density, 3 fluid, 1 d/dt scalar field, 1 scalar field */
@@ -34,10 +34,10 @@
 
 /* resolution parameters */
 #define SIZE    (18*R0)                         /* physical size in space */
-#define POINTS  ((long long) 128)               /* number of points on
+#define POINTS  ((long long) 256)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
-#define dt      (dx/20.0)
+#define dt      (dx/10.0)
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */
@@ -47,8 +47,8 @@
 #define AREA_STORAGE (POINTS*POINTS*DOF)      /* Storage needed for an array in the "wedge"         */
 
 /* simulation sampling information */
-#define MAX_STEPS           10000       /* Maximum # of steps to run */
-#define STEPS_TO_SAMPLE     250         /* # of steps to record, undersampled */
+#define MAX_STEPS           6000       /* Maximum # of steps to run */
+#define STEPS_TO_SAMPLE     60         /* # of steps to record, undersampled */
 #define STEPS_TO_DUMP       0          /* # of steps to give a full dump of and take DHT */
 #define POINTS_TO_SAMPLE    64         /* # of points along (x-)axis to
                                           sample.  This should evenly divide POINTS.  */
@@ -60,7 +60,7 @@
                                    the simulation should stop running.
                                    Use negative value for no stop. */
 #define STOP_MAX            ((-3.0 + sqrt(9.0 - 8.0*getALPHA()))/2/getALPHA())
-#define DUMP_STRIP 1            /* bool - full dump of a 1-d strip along the center of
+#define DUMP_STRIP 0            /* bool - full dump of a 1-d strip along the center of
                                    the simulation at each step? */
 
 /* some defaults. */
