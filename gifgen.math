@@ -1,0 +1,46 @@
+If[! DirectoryQ[Directory[] <> "/images"], CreateDirectory[Directory[] <> "/images"];, False;]
+
+spec = Import["data.power.dat.gz"];
+mult = Table[i^3, {i, Length[spec[[1]]]}];
+n = 64;
+
+UseFrontEnd[Do[
+
+  data = Import[
+   "data." <> ToString[step] <> ".h5.gz", {"Datasets", "/DS1"}, "DataEncoding" -> "GZIP"];
+
+  Print[data[[1,1,1,1]]];
+
+  img = GraphicsGrid[{{
+     ListDensityPlot[data[[n, ;; , ;; , 1]], 
+      PlotRange -> {{0, 64}, {0, 64}, All}, Mesh -> False, 
+      InterpolationOrder -> 0, ColorFunctionScaling -> False, 
+      ColorFunction -> (GrayLevel[0.5 - #/8] &)],
+     ListDensityPlot[data[[n, ;; , ;; , 5]], 
+      PlotRange -> {{0, 64}, {0, 64}, All}, Mesh -> False, 
+      InterpolationOrder -> 0, ColorFunctionScaling -> False, 
+      ColorFunction -> (GrayLevel[0.5 + (# + 5.95)/5.816] &)],
+     ListLogPlot[
+      mult # & /@ spec[[(step + 1)*30*5 - 4 ;; (step + 1)*30*5]], 
+      Joined -> True, PlotRange -> {{0, 120}, {10^4, 10^15}}, 
+      PlotStyle -> {Darker[Yellow], Red, Darker[Red], Purple, 
+        Darker[Green]}]
+     }, {
+     ListDensityPlot[data[[n, ;; , ;; , 2]], 
+      PlotRange -> {{0, 64}, {0, 64}, All}, Mesh -> False, 
+      InterpolationOrder -> 0, ColorFunctionScaling -> False, 
+      ColorFunction -> (GrayLevel[0.5 - #*2] &)],
+     ListDensityPlot[data[[n, ;; , ;; , 3]], 
+      PlotRange -> {{0, 64}, {0, 64}, All}, Mesh -> False, 
+      InterpolationOrder -> 0, ColorFunctionScaling -> False, 
+      ColorFunction -> (GrayLevel[0.5 - #*2] &)],
+     ListDensityPlot[data[[n, ;; , ;; , 4]], 
+      PlotRange -> {{0, 64}, {0, 64}, All}, Mesh -> False, 
+      InterpolationOrder -> 0, ColorFunctionScaling -> False, 
+      ColorFunction -> (GrayLevel[0.5 - #*2] &)]
+     }}, ImageSize -> 1000];
+
+  Export["images/slices-"<>ToString[step]<>".png", img];
+
+  , {step,0,340,1}
+]]

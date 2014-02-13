@@ -174,7 +174,7 @@ int main(int argc, char **argv)
   // 6 components to evolve -
   //   x2 = 12 components, for real and imaginary parts.
   //   - For reals: map (a, b) index on T_ab to array index using: (7-a)*a/2-4+b. 
-  //   - For ims: map (a, b) index on T_ab to array index using: 6 + (7-a)*a/2-4+b. 
+  //   - For ims: map (a, b) index on T_ab to array index using: (7-a)*a/2-4+b + 6. 
   // allocate space...
   // S_TT is Purely real (normal array)
   STTij = (simType **) malloc(6 * sizeof(simType *));
@@ -285,16 +285,6 @@ int main(int argc, char **argv)
 
       // also (only) store GWs at this point
       store_gws(lij, filedata);
-
-      // store energy density fft
-      for(i=0; i<POINTS; i++)
-        for(j=0; j<POINTS; j++)
-          for(k=0; k<POINTS; k++)
-          {
-            onefield[SINDEX(i, j, k)] = fields[INDEX(i, j, k, 0)];
-          }
-      powerdump(onefield, fonefield, p, filedata);
-
     } // end write data
 
     /* dump a strip of the simulation along one axis. */
@@ -398,8 +388,10 @@ int main(int argc, char **argv)
 /** End wedge method **/
 
     /* Evolve and output GW stuff (S_TT is calculated during evolution) */
-    fft_stt(STTij, fSTTij, p);
-    h_evolve(hij, lij, fSTTij);
+    if(s % gdt_dt == 0) {
+      fft_stt(STTij, fSTTij, p);
+      h_evolve(hij, lij, fSTTij);
+    }
 
     if(STOP_CELL > 0 && STOP_CELL < POINTS && fields[INDEX( POINTS/2, POINTS/2, STOP_CELL, 4)] < STOP_MAX)
     {

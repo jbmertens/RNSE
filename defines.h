@@ -24,7 +24,7 @@
 #define W_EOSm1     (W_EOS - 1.0)
 #define W_EOSp1     (W_EOS + 1.0)
 
-#define BETA      0.1  /* Ratio of energy density to well height difference */
+#define BETA      0.01  /* Ratio of energy density to well height difference */
 #define DELTA_V  (pow(sqrt(9.0-8.0*getALPHA())+3.0,2)*(sqrt(9.0-8.0*getALPHA())+3.0-4.0*getALPHA())/64.0/pow(getALPHA(),3))
 #define LOG_E     log(DELTA_V/BETA)  /* Log of fluid energy density */
 #define V_OFFSET  0.0 /* ~ VEV of true vacuum*/
@@ -33,11 +33,16 @@
 #define DOF ((long long) 6)  
 
 /* resolution parameters */
-#define SIZE    (18*R0)                         /* physical size in space */
+#define SIZE    (36*R0)                         /* physical size in space */
 #define POINTS  ((long long) 256)               /* number of points on
                                                   lattice (each axis) */
 #define dx      (1.0 * SIZE / 1.0 / POINTS)
 #define dt      (dx/10.0)
+#define gdt_dt  2                              /* GW spectrum evolves only every `gdt_dt` steps. */
+
+/* Metric evolution - should have at least one projection here. */
+#define PROJECT_L_TO_LTT 1
+#define PROJECT_S_TO_STT 0
 
 /* storage parameters */
 #define METHOD_ORDER 2                        /* Order of method - assumes diagonal Butcher tableau */

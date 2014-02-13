@@ -30,6 +30,11 @@ void store_gws(simType **lij, IOData filedata)
     f2_gw[i] = 0.0;
     numpoints_gw[i] = 0;
   }
+
+  // project l_ij if needed.
+  if(PROJECT_L_TO_LTT) {
+    LtoLTT(lij);
+  }
     
   // Perform average over all angles here (~integral d\Omega).
   for(i=0; i<POINTS; i++)
@@ -93,7 +98,6 @@ void store_gws(simType **lij, IOData filedata)
     }
   }
 
-
   // write data
   char *filename, *buffer;
   gzFile *datafile;
@@ -131,87 +135,22 @@ void store_gws(simType **lij, IOData filedata)
  */
 void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
 {
-  int i, j, k, a, b;
+  int i, j, k, a;
   simType pz, px, py, pp, p2, p;
-  simType h, l, S, trs_RE, trs_IM, kkS_RE, kkS_IM;
-  simType phat[3], k_mS_mi_RE[3], k_mS_mi_IM[3];
+  simType h, l, S;
+  simType gdt;
+
+  gdt = ((simType) gdt_dt)*dt;
+
+  if(PROJECT_S_TO_STT) {
+    StoSTT(fSTTij);
+  }
 
   // evolve h_ij (the fourier transform of)
     // solving (in fourier space) d_t l = k^2 h + S
     //                            d_t h = h
-
-
-  // The transverse/traceless projection of S is calculated here.
-  #pragma omp parallel for default(shared) \
-    private(i,j,k,a,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
-  for(int i=0; i<POINTS; i++)
-  {
-    px = (simType) (i <= POINTS/2 ? i : i - POINTS);
-    for(int j=0; j<POINTS; j++)
-    {
-      py = (simType) (j <= POINTS/2 ? j : j - POINTS);
-      for(int k=0; k<POINTS/2+1; k++)
-      {
-        pz = (simType) k;
-
-        // p (momentum)
-        // nan when p=0... oh well.
-        p = sqrt(px*px + py*py + pz*pz);
-        phat[0] = px/p;
-        phat[1] = py/p;
-        phat[2] = pz/p;
-
-
-        // pre-calculate some stuff:   
-          // Trace (S^a_a)
-          trs_RE = C_RE(fSTTij[0][fSINDEX(i,j,k)]) + C_RE(fSTTij[3][fSINDEX(i,j,k)]) + C_RE(fSTTij[5][fSINDEX(i,j,k)]);
-          trs_IM = C_IM(fSTTij[0][fSINDEX(i,j,k)]) + C_IM(fSTTij[3][fSINDEX(i,j,k)]) + C_IM(fSTTij[5][fSINDEX(i,j,k)]);
-          // One contraction (k^m S_mi)
-          k_mS_mi_RE[0] = phat[0]*C_RE(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[2][fSINDEX(i,j,k)]);
-          k_mS_mi_RE[1] = phat[0]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[4][fSINDEX(i,j,k)]);
-          k_mS_mi_RE[2] = phat[0]*C_RE(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[5][fSINDEX(i,j,k)]);
-          k_mS_mi_IM[0] = phat[0]*C_IM(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[2][fSINDEX(i,j,k)]);
-          k_mS_mi_IM[1] = phat[0]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[4][fSINDEX(i,j,k)]);
-          k_mS_mi_IM[2] = phat[0]*C_IM(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[5][fSINDEX(i,j,k)]);
-
-          // Two contractions (k^a k^b S_ab)
-          kkS_RE = phat[0]*k_mS_mi_RE[0] + phat[1]*k_mS_mi_RE[1] + phat[2]*k_mS_mi_RE[2];
-          kkS_IM = phat[0]*k_mS_mi_IM[0] + phat[1]*k_mS_mi_IM[1] + phat[2]*k_mS_mi_IM[2];
-
-        for(a=1; a<=3; a++) {
-          for(b=a; b<=3; b++) {
-            // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
-            // only evolve the transverse/traceless part:
-            C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
-              (
-                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_RE
-                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_RE
-                - (phat[a-1]*k_mS_mi_RE[b-1] + phat[b-1]*k_mS_mi_RE[a-1])
-              );
-            C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
-              (
-                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_IM
-                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_IM
-                - (phat[a-1]*k_mS_mi_IM[b-1] + phat[b-1]*k_mS_mi_IM[a-1])
-              );
-          }
-        }
-
-      } // end k loop
-    } // end j
-  } // end i
-
-  // No zero mode
-  for(a=1; a<=3; a++) {
-    for(b=a; b<=3; b++) {
-      C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(0,0,0)]) = 0;
-      C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(0,0,0)]) = 0;
-    }
-  }
-
   for(a=0; a<12; a++) {
-    #pragma omp parallel for default(shared) \
-      private(i,j,k,b,pz,px,py,pp,p2,p,h,l,S,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
+    #pragma omp parallel for default(shared) private(i,j,k,pz,px,py,pp,p2,p,h,l,S)
     for(int i=0; i<POINTS; i++)
     {
       px = (simType) (i <= POINTS/2 ? i : i - POINTS);
@@ -236,8 +175,8 @@ void h_evolve(simType **hij, simType **lij, fftw_complex **fSTTij)
           S *= dx*dx*dx;
 
           // This is RK4. Promise.
-          hij[a][fSINDEX(i,j,k)] += dt*(l*(6.0 - pp*dt*dt) + dt*(-h*pp + S)*(12.0 - dt*dt*pp)/4.0)/6.0;
-          lij[a][fSINDEX(i,j,k)] += dt*(6.0*S - 3.0*pp*l*dt + pp*pp*l*dt*dt*dt/4.0 - h*pp*(6.0 - pp*dt*dt))/6.0;
+          hij[a][fSINDEX(i,j,k)] += gdt*(l*(6.0 - pp*gdt*gdt) + gdt*(-h*pp + S)*(12.0 - gdt*gdt*pp)/4.0)/6.0;
+          lij[a][fSINDEX(i,j,k)] += gdt*(6.0*S - 3.0*pp*l*gdt + pp*pp*l*gdt*gdt*gdt/4.0 - h*pp*(6.0 - pp*gdt*gdt))/6.0;
         }
       }
     }
@@ -285,6 +224,174 @@ void fft_stt(simType **STTij, fftw_complex **fSTTij, fftw_plan p)
 
 
 /*
+ * Get the transverse-traceless part of the FFT of the stress-energy tensor.
+ */
+void StoSTT(fftw_complex **fSTTij)
+{
+  int i, j, k, a, b;
+  simType pz, px, py, p;
+  simType trs_RE, trs_IM, kkS_RE, kkS_IM;
+  simType phat[3], k_mS_mi_RE[3], k_mS_mi_IM[3];
+
+  // The transverse/traceless projection of S is calculated here.
+  #pragma omp parallel for default(shared) \
+    private(i,j,k,a,b,pz,px,py,p,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mS_mi_RE,k_mS_mi_IM)
+  for(int i=0; i<POINTS; i++)
+  {
+    px = (simType) (i <= POINTS/2 ? i : i - POINTS);
+    for(int j=0; j<POINTS; j++)
+    {
+      py = (simType) (j <= POINTS/2 ? j : j - POINTS);
+      for(int k=0; k<POINTS/2+1; k++)
+      {
+        pz = (simType) k;
+
+        // p (momentum)
+        // nan when p=0... oh well.
+        p = sqrt(px*px + py*py + pz*pz);
+        phat[0] = px/p;
+        phat[1] = py/p;
+        phat[2] = pz/p;
+
+        // pre-calculate some stuff:   
+          // Trace (S^a_a)
+          trs_RE = C_RE(fSTTij[0][fSINDEX(i,j,k)]) + C_RE(fSTTij[3][fSINDEX(i,j,k)]) + C_RE(fSTTij[5][fSINDEX(i,j,k)]);
+          trs_IM = C_IM(fSTTij[0][fSINDEX(i,j,k)]) + C_IM(fSTTij[3][fSINDEX(i,j,k)]) + C_IM(fSTTij[5][fSINDEX(i,j,k)]);
+          // One contraction (k^m S_mi)
+          k_mS_mi_RE[0] = phat[0]*C_RE(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[2][fSINDEX(i,j,k)]);
+          k_mS_mi_RE[1] = phat[0]*C_RE(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[4][fSINDEX(i,j,k)]);
+          k_mS_mi_RE[2] = phat[0]*C_RE(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_RE(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_RE(fSTTij[5][fSINDEX(i,j,k)]);
+          k_mS_mi_IM[0] = phat[0]*C_IM(fSTTij[0][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[2][fSINDEX(i,j,k)]);
+          k_mS_mi_IM[1] = phat[0]*C_IM(fSTTij[1][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[3][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[4][fSINDEX(i,j,k)]);
+          k_mS_mi_IM[2] = phat[0]*C_IM(fSTTij[2][fSINDEX(i,j,k)]) + phat[1]*C_IM(fSTTij[4][fSINDEX(i,j,k)]) + phat[2]*C_IM(fSTTij[5][fSINDEX(i,j,k)]);
+
+          // Two contractions (k^a k^b S_ab)
+          kkS_RE = phat[0]*k_mS_mi_RE[0] + phat[1]*k_mS_mi_RE[1] + phat[2]*k_mS_mi_RE[2];
+          kkS_IM = phat[0]*k_mS_mi_IM[0] + phat[1]*k_mS_mi_IM[1] + phat[2]*k_mS_mi_IM[2];
+
+        // get transverse-traceless part
+        for(a=1; a<=3; a++) {
+          for(b=a; b<=3; b++) {
+            // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
+            // only evolve the transverse/traceless part:
+            C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
+              (
+                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_RE
+                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_RE
+                - (phat[a-1]*k_mS_mi_RE[b-1] + phat[b-1]*k_mS_mi_RE[a-1])
+              );
+            C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(i,j,k)]) +=
+              (
+                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_IM
+                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_IM
+                - (phat[a-1]*k_mS_mi_IM[b-1] + phat[b-1]*k_mS_mi_IM[a-1])
+              );
+          }
+        }
+
+      } // end k loop
+    } // end j
+  } // end i
+
+  // No zero mode
+  for(a=1; a<=3; a++) {
+    for(b=a; b<=3; b++) {
+      C_RE(fSTTij[(7-a)*a/2-4+b][fSINDEX(0,0,0)]) = 0;
+      C_IM(fSTTij[(7-a)*a/2-4+b][fSINDEX(0,0,0)]) = 0;
+    }
+  }
+
+}
+
+
+/*
+ * Get the transverse-traceless part of the FFT of the metric tensor (derivative of it).
+ */
+void LtoLTT(simType **lij)
+{
+
+printf("Running LtoLTT\n");
+
+  int i, j, k, a, b;
+  simType pz, px, py, p;
+  simType trs_RE, trs_IM, kkS_RE, kkS_IM;
+  simType phat[3], k_mL_mi_RE[3], k_mL_mi_IM[3];
+
+  // The transverse/traceless projection of S is calculated here.
+  #pragma omp parallel for default(shared) \
+    private(i,j,k,a,b,pz,px,py,p,trs_RE,trs_IM,kkS_RE,kkS_IM,phat,k_mL_mi_RE,k_mL_mi_IM)
+  for(int i=0; i<POINTS; i++)
+  {
+    px = (simType) (i <= POINTS/2 ? i : i - POINTS);
+    for(int j=0; j<POINTS; j++)
+    {
+      py = (simType) (j <= POINTS/2 ? j : j - POINTS);
+      for(int k=0; k<POINTS/2+1; k++)
+      {
+        pz = (simType) k;
+
+        // p (momentum)
+        // nan when p=0... oh well.
+        p = sqrt(px*px + py*py + pz*pz);
+        phat[0] = px/p;
+        phat[1] = py/p;
+        phat[2] = pz/p;
+
+        // pre-calculate some stuff:   
+          
+          // Trace (S^a_a)
+          trs_RE = lij[0][fSINDEX(i,j,k)] + lij[3][fSINDEX(i,j,k)] + lij[5][fSINDEX(i,j,k)];
+          trs_IM = lij[6][fSINDEX(i,j,k)] + lij[9][fSINDEX(i,j,k)] + lij[11][fSINDEX(i,j,k)];
+
+          // One contraction (k^m S_mi)
+          k_mL_mi_RE[0] = phat[0]*lij[0][fSINDEX(i,j,k)] + phat[1]*lij[1][fSINDEX(i,j,k)] + phat[2]*lij[2][fSINDEX(i,j,k)];
+          k_mL_mi_RE[1] = phat[0]*lij[1][fSINDEX(i,j,k)] + phat[1]*lij[3][fSINDEX(i,j,k)] + phat[2]*lij[4][fSINDEX(i,j,k)];
+          k_mL_mi_RE[2] = phat[0]*lij[2][fSINDEX(i,j,k)] + phat[1]*lij[4][fSINDEX(i,j,k)] + phat[2]*lij[5][fSINDEX(i,j,k)];
+
+          k_mL_mi_IM[0] = phat[0]*lij[6][fSINDEX(i,j,k)] + phat[1]*lij[7][fSINDEX(i,j,k)] + phat[2]*lij[8][fSINDEX(i,j,k)];
+          k_mL_mi_IM[1] = phat[0]*lij[7][fSINDEX(i,j,k)] + phat[1]*lij[9][fSINDEX(i,j,k)] + phat[2]*lij[10][fSINDEX(i,j,k)];
+          k_mL_mi_IM[2] = phat[0]*lij[8][fSINDEX(i,j,k)] + phat[1]*lij[10][fSINDEX(i,j,k)] + phat[2]*lij[11][fSINDEX(i,j,k)];
+
+          // Two contractions (k^a k^b S_ab)
+          kkS_RE = phat[0]*k_mL_mi_RE[0] + phat[1]*k_mL_mi_RE[1] + phat[2]*k_mL_mi_RE[2];
+          kkS_IM = phat[0]*k_mL_mi_IM[0] + phat[1]*k_mL_mi_IM[1] + phat[2]*k_mL_mi_IM[2];
+
+        // get transverse-traceless part
+        for(a=1; a<=3; a++) {
+          for(b=a; b<=3; b++) {
+            // (7-a)*a/2-4+b formula maps indexes of h to sequential indices
+            // only evolve the transverse/traceless part:
+            lij[(7-a)*a/2-4+b][fSINDEX(i,j,k)] +=
+              (
+                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_RE
+                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_RE
+                - (phat[a-1]*k_mL_mi_RE[b-1] + phat[b-1]*k_mL_mi_RE[a-1])
+              );
+            lij[(7-a)*a/2-4+b + 6][fSINDEX(i,j,k)] +=
+              (
+                0.5*(phat[a-1]*phat[b-1] - 1.0*(a==b))*trs_IM
+                + 0.5*(phat[a-1]*phat[b-1] + 1.0*(a==b))*kkS_IM
+                - (phat[a-1]*k_mL_mi_IM[b-1] + phat[b-1]*k_mL_mi_IM[a-1])
+              );
+          }
+        }
+
+      } // end k loop
+    } // end j
+  } // end i
+
+  // No zero mode
+  for(a=1; a<=3; a++) {
+    for(b=a; b<=3; b++) {
+      lij[(7-a)*a/2-4+b][fSINDEX(0,0,0)] = 0;
+      lij[(7-a)*a/2-4+b + 6][fSINDEX(0,0,0)] = 0;
+    }
+  }
+
+}
+
+
+/*
  * Calculate S at a point (i,j,k).
  * This does not remove the transverse/traceless part.
  */
@@ -293,7 +400,7 @@ void set_stt(PointData *paq, simType **STTij, int i, int j, int k)
   // S_ij = T_ij
   //      = (e+p)U^iU^j + d^if*d^jf
   // This calculation is not traceless or transverse - that projection will be done later.
-  // However, we don't calculate clearly traceful parts (eg, X*\delta_ij pieces) as a small optimization.
+  // However as a small optimization, we don't calculate clearly traceful parts (eg, X*\delta_ij pieces).
 
   int a, b;
   for(a=1; a<=3; a++) {
