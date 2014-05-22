@@ -469,7 +469,7 @@ static inline simType energy_evfn(PointData *paq)
     - W_EOSp1 * paq->ut / paq->relw * (
       - W_EOSm1 / W_EOSp1 * paq->ude
       + paq->trgrad
-      + paq->uudu / paq->ut2
+      - paq->uudu / paq->ut2
     )
     - W_EOSp1 / paq->ut2 * sumvv(paq->fields, paq->Ji)
     - (paq->ut * paq->ji[0] + paq->srcsum) / exp(paq->fields[0]) / paq->ut
