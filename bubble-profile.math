@@ -1,0 +1,103 @@
+\[Alpha] = 0.45; R0 = 1/(1 - \[Alpha])
+nb = 48;
+s = 36 R0;
+spacing = 4.1 R0;
+res = 256;
+
+
+V[\[Phi]_, \[Alpha]_] := \[Phi]^2/2 + \[Phi]^3/2 + \[Alpha] \[Phi]^4/8;
+
+SetParams[] := (
+   size = 500;
+   xmin = 10^-5;
+   xmax = 10 1/(1 - \[Alpha]);
+   \[Delta]x = (xmax - xmin)/size;
+   xgrid = Table[x, {x, xmax, xmin, -\[Delta]x}];
+   revstep = \[Phi]m /. 
+     Solve[(\[Phi]p + \[Phi]m - 2 \[Phi])/\[Delta]x^2 + 
+         3/\[Rho] (\[Phi]p - \[Phi]m)/(2 \[Delta]x) - 
+         D[V[\[Phi], \[Alpha]], \[Phi]] == 0, \[Phi]m][[1]];
+   fevstep = \[Phi]p /. 
+     Solve[(\[Phi]p + \[Phi]m - 2 \[Phi])/\[Delta]x^2 + 
+         3/\[Rho] (\[Phi]p - \[Phi]m)/(2 \[Delta]x) - 
+         D[V[\[Phi], \[Alpha]], \[Phi]] == 0, \[Phi]p][[1]];
+   RGetSolution[\[Delta]_] := (\[Phi]sol = 
+      SetPrecision[{0, \[Delta]}, precision];
+     Do[If[Abs[\[Phi]sol[[-1]]] > 10^10, 0;, 
+        AppendTo[\[Phi]sol, 
+         N[(revstep /. {\[Phi] -> \[Phi]sol[[-1]], \[Phi]p -> \
+\[Phi]sol[[-2]], \[Rho] -> xgrid[[i]]}), precision]]];, {i, 
+       Length[xgrid] - 1}];
+     Return[\[Phi]sol];);
+   FGetSolution[
+     g_, \[Delta]_] := (\[Phi]sol = 
+      SetPrecision[{g, g + \[Delta]}, precision];
+     Do[If[Abs[\[Phi]sol[[-1]]] > 10^10, 0;, 
+        AppendTo[\[Phi]sol, 
+         N[(fevstep /. {\[Phi] -> \[Phi]sol[[-1]], \[Phi]m -> \
+\[Phi]sol[[-2]], \[Rho] -> xgrid[[-i]]}), precision]]];, {i, 
+       Length[xgrid] - 1}];
+     Return[\[Phi]sol];););
+SetParams[];
+
+GetSol[] := (
+   precision = 1400;
+   tol = 10^-1400;
+   maxiter = 5000; iter = 0;
+   \[Delta]min = 0;
+   \[Delta]max = -10^-1;
+   While[Round[\[Delta]max, 10 tol] != Round[\[Delta]min, 10 tol] && 
+     iter < maxiter, (
+     \[Delta]guess = (\[Delta]max + \[Delta]min)/2;
+     \[Phi]der = (#[[-2]] - #[[-3]]) &@RGetSolution[\[Delta]guess];
+     If[\[Phi]der > 
+       0, \[Delta]max = \[Delta]guess;, \[Delta]min = \[Delta]guess;];
+     iter++;
+     )];
+   Print[N[{\[Delta]min, \[Delta]max, \[Delta]guess, iter, \[Phi]der}]]
+   );
+
+Print["Generating Solution..."];
+sols = {};
+SetParams[];
+GetSol[];
+
+varyfn = Interpolation[
+   N[Join[Transpose[{xgrid[[1 ;; 
+          Length[\[Phi]sol] - 
+           2]], \[Phi]sol[[1 ;; -3]]}], {{0, \[Phi]sol[[-3]]}}]], 
+   InterpolationOrder -> 3];
+bubblefn = If[# >= xgrid[[1]], 0.0, varyfn[#]] &;
+
+
+Print["Generating Bubble Positions..."];
+ModDistance[u_, v_] := 
+ Sqrt[Total[(Mod[Min[Abs[(#1 - #2) {1, 1, 1} + {0, s, -s}]], 
+       s] & @@@ ({u, v}\[Transpose]))^2]]
+
+points = {RandomReal[{0, s}, 3]};
+While[Length[points] < nb,
+ p = RandomReal[{0, s}, 3];
+ If[Min[ModDistance[#, p] & /@ points] > spacing, AppendTo[points, p]];
+ ]
+
+Print["Generating Bubbles..."];
+quarterbubble =
+  Table[bubblefn[Sqrt[x^2 + y^2 + z^2]], {x, 0, s/2 - s/res, 
+    s/res}, {y, 0, s/2 - s/res, s/res}, {z, 0, s/2 - s/res, s/res}];
+
+GridMirror[grid_, level_] := Join[Reverse[grid, level], grid, level];
+
+fullbubble = 
+  GridMirror[GridMirror[GridMirror[quarterbubble, 1], 2], 3];
+allbubbles = ConstantArray[0, {res, res, res}];
+Do[
+  allbubbles += RotateRight[fullbubble, Round[#/s*res]] & @ points[[n]];
+  ,{n,Length[points]}
+]
+
+Print["Saving..."];
+Export["INITIAL_a-" <> ToString[N[\[Alpha], 2]] <> "_SIZE-" <> 
+   ToString[Round[s/R0]] <> "R0_RES-" <> ToString[res] <> 
+   "_BUBBLES-" <> ToString[Length[points]] <> ".h5", allbubbles];
+Print["Done."];
